@@ -1,0 +1,37 @@
+name: Build Jala IPA
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: brew install xcodegen ldid
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build (unsigned)
+        run: |
+          xcodebuild -project Jala.xcodeproj -scheme Jala -configuration Release \
+            -sdk iphoneos -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package IPA for TrollStore
+        run: |
+          APP=build/Build/Products/Release-iphoneos/Jala.app
+          ldid -S "$APP/Jala"
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          zip -qry Jala.ipa Payload
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Jala-ipa
+          path: Jala.ipa
