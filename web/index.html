@@ -466,10 +466,16 @@ function announce(btn){
   if(document.activeElement && document.activeElement.matches && document.activeElement.matches('input.cell')) document.activeElement.blur();
   const {order,rankOf}=standings();
   const say=t=>t<0?'سالب '+Math.abs(t):String(t);
-  const text=order.map(o=>`${ORD[rankOf[o.p]-1]||('رقم '+rankOf[o.p])}، ${o.name}، ${say(o.t)}`).join('. ')+'.';
+  // players who share a place are read together: "الثالث، فلان و فلان، 100"
+  const groups=[];
+  order.forEach(o=>{ const g=groups[groups.length-1]; if(g&&g.t===o.t) g.names.push(o.name); else groups.push({rank:rankOf[o.p],t:o.t,names:[o.name]}); });
+  const text=groups.map(g=>`${ORD[g.rank-1]||('رقم '+g.rank)}، ${g.names.join(' و ')}، ${say(g.t)}`).join('. ')+'.';
   const u=new SpeechSynthesisUtterance(text);
-  u.lang='ar-SA'; u.rate=0.9;
-  const v=S.getVoices().find(v=>/^ar/i.test(v.lang)); if(v) u.voice=v;
+  u.lang='ar-SA'; u.rate=1.15;
+  // prefer a Saudi voice (on iPhone: Majed / ماجد), then any Arabic voice
+  const vs=S.getVoices();
+  const v=vs.find(v=>/^ar[-_]SA/i.test(v.lang)&&/maged|majed|ماجد/i.test(v.name))||vs.find(v=>/^ar[-_]SA/i.test(v.lang))||vs.find(v=>/^ar/i.test(v.lang));
+  if(v) u.voice=v;
   u.onend=u.onerror=()=>btn.classList.remove('on');
   btn.classList.add('on');
   S.cancel(); S.speak(u);
