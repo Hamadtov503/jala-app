@@ -1,0 +1,523 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>جلا Jala</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Aref+Ruqaa:wght@700&family=Reem+Kufi:wght@600;700&display=swap">
+<style>
+/* Layout: one-column phone scorecard — standings on top, round grid below, bottom-sheet keypad for entry */
+/* Single deliberate look requested by the players: a milky background in every theme */
+:root{
+  --bg:#F5EFE3; --surface:#FFFCF6; --sunk:#F0E8D9; --ink:#1E211C; --muted:#6E6A5E; --line:#E2D8C5;
+  --felt:#0E6A4D; --felt-ink:#FFFFFF; --felt-soft:#E1EDDF;
+  --neg:#B3261E; --gold:#A87A0F; --gold-soft:#F6E7C2;
+  --pen:#7A1F2B; --pen-ink:#FFF3EE;
+  --navy:#16284A; --navy-ink:#F4F6FB;
+  --r1:#1F8A4C; --r2:#E9C21F; --r3:#E8781E; --r4:#C62828;
+  --display:"Reem Kufi","IBM Plex Sans Arabic",Tahoma,sans-serif;
+  --body:"IBM Plex Sans Arabic",Tahoma,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;direction:rtl;-webkit-tap-highlight-color:transparent}
+.app{max-width:640px;margin:0 auto;padding-block:14px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--felt);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+
+header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand h1{font-family:var(--display);font-size:34px;line-height:1;margin:0;color:var(--felt)}
+.brand span{color:var(--muted);font-size:13px}
+.tools{display:flex;gap:8px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;font-size:14px;font-weight:500}
+.btn.primary{background:var(--felt);color:var(--felt-ink);border-color:var(--felt)}
+.btn.danger{color:var(--neg)}
+
+.status{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.status b{color:var(--ink);font-weight:600}
+.dealer{display:inline-flex;align-items:center;gap:6px;background:var(--felt-soft);color:var(--ink);padding:4px 10px;border-radius:999px;font-size:13px}
+
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:10px;align-items:center;min-width:0}
+.pcard .rank{grid-row:1/3;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;background:var(--sunk);color:var(--muted)}
+.pcard .name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.pcard .tot{font-size:22px;font-weight:700;line-height:1.15;display:flex;gap:6px;align-items:baseline;justify-content:flex-start}
+.pcard .diff{font-size:12px;font-weight:500;color:var(--muted)}
+.pcard.lead{border-color:var(--gold);background:var(--gold-soft)}
+.pcard.lead .rank{background:var(--gold);color:var(--surface)}
+.winner{background:var(--gold-soft);border:1px solid var(--gold);border-radius:12px;padding:12px 14px;font-weight:600;text-align:center}
+.winner strong{font-family:"Aref Ruqaa","Times New Roman",serif;font-weight:700;font-size:30px;line-height:1.2;color:var(--gold)}
+
+.sheetwrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+table{border-collapse:collapse;width:100%;min-width:max-content}
+th,td{border-bottom:1px solid var(--line);text-align:center;padding:0}
+thead th{font-size:13px;font-weight:600;color:var(--muted);padding:10px 4px;background:var(--sunk);white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis}
+.rcol{width:76px;text-align:right;padding:6px 10px;white-space:nowrap}
+.rcol .rn{font-weight:700;font-size:14px}
+.rcol .rd{display:block;font-size:11px;color:var(--muted);max-width:64px;overflow:hidden;text-overflow:ellipsis}
+tr.cycle td{border-top:2px solid var(--line)}
+tr.current .rcol{box-shadow:inset -3px 0 0 var(--felt)}
+.cell{width:100%;min-width:64px;height:44px;border:0;background:transparent;font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.cell.empty{color:var(--line)}
+.cell.neg{color:var(--neg)}
+/* every full cycle (rounds 4, 8, 12…) gets its own row color */
+tbody tr.cyc[id^="row-"] td:not(.rcol){background:#FBE4E2;border-bottom-color:#F0C9C5}
+.cell.active{outline:2px solid var(--felt);outline-offset:-3px;border-radius:8px}
+tr.pen td{background:var(--pen);color:var(--pen-ink);border-bottom-color:var(--pen)}
+tr.pen .cell,tr.pen .cell.neg{color:var(--pen-ink)}
+tr.pen .cell.empty{color:color-mix(in srgb,var(--pen-ink) 40%,transparent)}
+tr.pen .cell.active{outline-color:var(--pen-ink)}
+tr.sum td{background:var(--navy);color:var(--navy-ink);border-bottom:0}
+tr.sum .cell{color:var(--navy-ink);font-size:18px;font-weight:700;cursor:default}
+.hint{font-size:13px;color:var(--muted);text-align:center;margin:0}
+
+/* bottom sheets */
+.backdrop{position:fixed;inset:0;background:rgba(5,12,9,.45);z-index:10}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:11;background:var(--surface);border-radius:18px 18px 0 0;border-top:1px solid var(--line);
+  padding-top:14px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  max-height:92%;overflow-y:auto;animation:up .18s ease-out}
+.sheet-in{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+@keyframes up{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.sheet{animation:none}}
+.kp-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.kp-head .who{font-weight:600}
+.kp-head .who small{display:block;color:var(--muted);font-weight:400;font-size:12px}
+.kp-val{font-size:40px;font-weight:700;min-height:52px;text-align:center;background:var(--sunk);border-radius:12px;padding:4px 0}
+.kp-val.neg{color:var(--neg)}
+.kp-val.ph{color:var(--muted);font-weight:500;font-size:20px;display:grid;place-items:center}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.chip{border:1px solid var(--line);background:var(--sunk);border-radius:10px;height:40px;font-weight:600;font-size:16px}
+.chip.neg{color:var(--neg)}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;direction:ltr}
+.key{border:1px solid var(--line);background:var(--surface);border-radius:12px;height:52px;font-size:22px;font-weight:600}
+.key.fn{background:var(--sunk);font-size:16px}
+.kp-actions{display:grid;grid-template-columns:1fr 1fr 2fr;gap:8px}
+.kp-actions .btn{height:48px;font-size:16px}
+
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:13px;color:var(--muted)}
+.prow{display:flex;gap:8px;align-items:center}
+.prow input{flex:1;min-width:0;height:42px;border:1px solid var(--line);border-radius:10px;background:var(--sunk);color:var(--ink);font:inherit;padding:0 12px}
+.prow .x{width:42px;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--neg);font-size:18px}
+select{height:42px;border:1px solid var(--line);border-radius:10px;background:var(--sunk);color:var(--ink);font:inherit;padding:0 10px}
+.confirm{border:1px solid var(--neg);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.confirm p{margin:0}
+.row2{display:flex;gap:8px}
+.row2 .btn{flex:1;height:44px}
+h2{font-family:var(--display);font-size:22px;margin:0;color:var(--felt)}
+
+/* opening splash: four aces fan out across the felt, then the name lands */
+#splash{position:fixed;inset:0;z-index:50;background:radial-gradient(120% 90% at 50% 40%,#FFFCF5 0%,#F5EFE3 60%,#ECE3D2 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;overflow:hidden;cursor:pointer;transition:opacity .45s ease}
+#splash.out{opacity:0;pointer-events:none}
+.deck{position:relative;width:260px;height:210px}
+.pc{position:absolute;left:50%;top:50%;width:92px;height:132px;margin:-66px 0 0 -46px;background:#FFFFFF;border-radius:10px;box-shadow:0 12px 26px rgba(80,60,30,.18),0 0 0 1px rgba(80,60,30,.12);color:#16201B;display:grid;place-items:center;transform:translate(0,40px) rotate(0) scale(.8);opacity:0;animation:deal .7s cubic-bezier(.2,.8,.2,1.05) forwards}
+.pc.red{color:#C0262D}
+.pc b{font-size:56px;line-height:1;font-family:Georgia,"Times New Roman",serif;font-weight:400}
+.pc i{position:absolute;top:7px;left:9px;font-style:normal;font-weight:700;font-size:16px;font-family:Georgia,serif}
+.pc i.br{top:auto;left:auto;bottom:7px;right:9px;transform:rotate(180deg)}
+.s1{--to:translate(-96px,-26px) rotate(-22deg);animation-delay:.10s}
+.s2{--to:translate(-34px,-48px) rotate(-7deg);animation-delay:.25s}
+.s3{--to:translate(32px,-46px) rotate(8deg);animation-delay:.40s}
+.s4{--to:translate(94px,-22px) rotate(23deg);animation-delay:.55s}
+@keyframes deal{to{transform:var(--to);opacity:1}}
+.word{display:flex;flex-direction:column;align-items:center;gap:2px;opacity:0;transform:translateY(12px);animation:rise .6s ease-out 1.15s forwards;color:var(--felt)}
+.word .ar{font-family:var(--display);font-size:64px;line-height:1.1}
+.word .en{font-family:Georgia,"Times New Roman",serif;font-size:22px;letter-spacing:.35em;padding-left:.35em;color:var(--gold)}
+@keyframes rise{to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.pc{animation:none;transform:var(--to);opacity:1}.word{animation:none;opacity:1;transform:none}}
+
+input.cell{display:block;font-family:inherit;font-size:17px;font-weight:600;text-align:center;color:var(--ink);padding:0;border-radius:0;-webkit-appearance:none;appearance:none;font-variant-numeric:tabular-nums}
+input.cell::placeholder{color:var(--line);opacity:1}
+input.cell.neg{color:var(--r1)}
+tr.pen input.cell.neg{color:var(--pen-ink)}
+input.cell:focus{outline:2px solid var(--felt);outline-offset:-3px;border-radius:8px;background:var(--surface)}
+input.cell.bad{outline:2px solid var(--neg);outline-offset:-3px;border-radius:8px;background:color-mix(in srgb,var(--neg) 10%,transparent)}
+tr.pen input.cell{color:var(--pen-ink)}
+tr.pen input.cell::placeholder{color:color-mix(in srgb,var(--pen-ink) 40%,transparent)}
+tr.pen input.cell:focus{outline-color:var(--pen-ink);background:color-mix(in srgb,var(--pen-ink) 12%,transparent)}
+.sumv{display:grid;place-items:center}
+/* fit every player on screen: fixed columns, inputs never set their own width */
+table{table-layout:fixed;min-width:0;width:100%}
+th.rcol,td.rcol{width:62px;padding:6px 8px}
+thead th{max-width:none;padding:10px 2px}
+.cell,input.cell{width:100%;min-width:0;height:40px}
+.sheetwrap{overflow-x:hidden}
+
+.board{grid-template-columns:repeat(4,1fr)}
+.pcard{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;padding:12px 6px;min-height:64px}
+.pcard .name{max-width:100%}
+.pcard.deal{border-color:var(--felt);background:var(--felt-soft)}
+.pcard .name{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+/* small playing-card mark beside the dealer's name */
+.dico{display:inline-grid;place-items:center;flex:none;width:16px;height:22px;border-radius:3px;background:#FFFFFF;border:1.5px solid var(--felt);color:var(--felt);font-size:11px;line-height:1;font-family:Georgia,serif;box-shadow:1px 1px 0 var(--felt-soft);transform:rotate(-8deg)}
+/* side column of round numbers and dealers shares the header's background */
+tbody tr[id^="row-"] td.rcol{background:var(--sunk)}
+tr.rank td{background:var(--sunk);border-bottom:0;height:44px}
+.rk{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;font-weight:700;font-size:15px;background:var(--surface);border:1px solid var(--line);color:var(--muted)}
+/* standing colors: 1 safe (green) → 4 danger (red) */
+.rk.r1{background:var(--r1);border-color:var(--r1);color:#FFFFFF}
+.rk.r2{background:var(--r2);border-color:var(--r2);color:#2A2205}
+.rk.r3{background:var(--r3);border-color:var(--r3);color:#FFFFFF}
+.rk.r4{background:var(--r4);border-color:var(--r4);color:#FFFFFF}
+
+.pcard .bar{grid-column:1/3;height:4px;border-radius:2px;background:var(--line);margin-top:8px;overflow:hidden}
+.pcard .bar i{display:block;height:100%;background:var(--felt);border-radius:2px}
+.pcard .bar.hot i{background:var(--neg)}
+.rowtools{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.rowtools .btn{height:44px;padding:0 18px}
+.err{margin:0;color:var(--neg);font-size:13px;text-align:center}
+.seg{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:6px}
+.segb,.segi{height:44px;border:1px solid var(--line);border-radius:10px;background:var(--sunk);color:var(--ink);font:inherit;font-weight:600;text-align:center;min-width:0}
+.segb.on,.segi.on{background:var(--felt);color:var(--felt-ink);border-color:var(--felt)}
+.segi::placeholder{color:var(--muted);font-weight:400}
+.segi.on::placeholder{color:var(--felt-ink)}
+.modal{position:fixed;z-index:11;left:50%;top:50%;transform:translate(-50%,-50%);width:min(360px,calc(100% - 32px));background:var(--surface);border:1px solid var(--gold);border-radius:20px;padding:22px 18px 18px;display:flex;flex-direction:column;gap:10px;text-align:center;animation:pop .22s ease-out}
+@keyframes pop{from{transform:translate(-50%,-46%) scale(.96);opacity:0}to{transform:translate(-50%,-50%);opacity:1}}
+@media (prefers-reduced-motion:reduce){.modal{animation:none}}
+.modal .crown{font-size:40px;line-height:1;color:var(--gold)}
+.modal .mlabel{margin:0;font-family:var(--display);font-size:20px;color:var(--gold)}
+.modal h2{font-family:"Aref Ruqaa","Times New Roman",serif;font-weight:700;font-size:42px;line-height:1.25;color:var(--pen);text-wrap:balance}
+/* winner mark: a king held up in front of a small fan */
+.kfan{position:relative;height:96px;width:140px;margin:0 auto 2px}
+.kc{position:absolute;left:50%;bottom:0;width:58px;height:82px;margin-left:-29px;border-radius:7px;background:#FFFFFF;border:1px solid var(--line);box-shadow:0 6px 14px rgba(80,60,30,.18);display:grid;place-items:center;font-family:Georgia,"Times New Roman",serif;color:#1E211C;transform-origin:50% 100%}
+.kc b{font-size:30px;font-weight:400;line-height:1}
+.kc i{position:absolute;top:4px;left:6px;font-style:normal;font-weight:700;font-size:13px}
+.kc i.br{top:auto;left:auto;bottom:4px;right:6px;transform:rotate(180deg)}
+.kc.l{transform:rotate(-20deg) translateX(-8px);color:#C0262D}
+.kc.r{transform:rotate(20deg) translateX(8px)}
+.kc.k{z-index:1;bottom:8px;border:2px solid var(--gold);box-shadow:0 10px 22px rgba(168,122,15,.30)}
+.kc.k b{font-size:34px}
+.modal .mnote{margin:0;font-size:13px;color:var(--muted)}
+.final{list-style:none;margin:4px 0;padding:0;display:flex;flex-direction:column;gap:4px;counter-reset:f}
+.final li{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:10px;background:var(--sunk);counter-increment:f}
+.final li span::before{content:counter(f) ". ";color:var(--muted)}
+.final li.w{background:var(--gold-soft);font-weight:700}
+.btn.icon{width:42px;height:42px;padding:0;display:grid;place-items:center;flex:none}
+.tools{align-items:stretch}
+#saved{display:inline-block;color:var(--felt);font-weight:500;transition:opacity .3s}
+#saved.flash{animation:flash .8s ease-out}
+@keyframes flash{0%{opacity:.25}100%{opacity:1}}
+@media (max-width:380px){.tools .btn:not(.icon){padding:8px 9px;font-size:13px}.brand span{display:none}}
+</style>
+
+<div id="splash" aria-label="جلا Jala">
+  <div class="deck">
+    <div class="pc s1"><i>A</i><b>♠</b><i class="br">A</i></div>
+    <div class="pc s2"><i>A</i><b>♣</b><i class="br">A</i></div>
+    <div class="pc s3 red"><i>A</i><b>♥</b><i class="br">A</i></div>
+    <div class="pc s4 red"><i>A</i><b>♦</b><i class="br">A</i></div>
+  </div>
+  <div class="word"><span class="ar">جلا</span><span class="en">Jala</span></div>
+</div>
+
+<div class="app" id="app">
+  <header>
+    <div class="brand"><h1>جلا</h1><span>Jala · حاسبة القيمة</span></div>
+    <div class="tools">
+      <button class="btn icon danger" id="btnClear" aria-label="إفراغ الخانات" title="إفراغ الخانات"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
+      <button class="btn icon" id="btnSettings" aria-label="الإعدادات" title="الإعدادات"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+      <button class="btn icon primary" id="btnNew" aria-label="قيمة جديدة" title="قيمة جديدة"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+    </div>
+  </header>
+
+  <div class="status" id="status"></div>
+  <div id="winner"></div>
+  <div class="board" id="board"></div>
+
+  <div class="sheetwrap"><table id="grid"></table></div>
+  <div class="rowtools" id="rowtools"></div>
+  <p class="hint">اضغط على الخانة واكتب الرقم (موجب أو سالب) ثم انتر. كل 4 جولات دورة كاملة، والأقل مجموع هو الفايز. <span id="saved">كل شي ينحفظ تلقائياً ✓</span></p>
+</div>
+
+<div id="layer" hidden></div>
+
+<script>
+(function(){
+const KEY='jala-game-v2';
+const QUICK=[-40,-20,0,10,20,30,40,50,60,70,80,90,100,110,120,130];
+
+function sample(){ return blank(['بو بداح','عمر','علي','محمد'],500); }
+function blank(players,target){
+  return {players:players.slice(),target,scores:[],pen:players.map(()=>null)};
+}
+function load(){
+  try{const raw=localStorage.getItem(KEY); if(raw){const g=JSON.parse(raw); if(g&&Array.isArray(g.players)&&Array.isArray(g.scores)){ g.target=g.target||500; return g; }}}catch(e){}
+  return sample();
+}
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(G));}catch(e){}
+  const s=document.getElementById('saved');
+  if(s){ s.classList.remove('flash'); void s.offsetWidth; s.classList.add('flash'); }
+}
+
+/* The sheet starts with one full cycle (one deal per player); after that rows
+   are added one at a time. The game ends once a filled sheet puts anyone at or over the target. */
+const rowFull=r=>r.every(v=>v!=null);
+const rowEmpty=r=>r.every(v=>v==null);
+function isOver(){
+  const any=G.scores.some(rowFull);
+  const noHalf=G.scores.every(r=>rowFull(r)||rowEmpty(r));
+  return any && noHalf && Math.max(...totals())>=G.target;
+}
+function normalize(){
+  while(G.scores.length<G.players.length) G.scores.push(G.players.map(()=>null));
+}
+function addRow(){ G.scores.push(G.players.map(()=>null)); save(); }
+
+let G=load();
+let edit=null; // {r: number|'pen', p: number, buf: string, fresh: bool}
+let ui={sheet:null, confirmNew:false};
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=v=>v==null?'–':(v<0?'−'+Math.abs(v):String(v));
+
+function totals(){
+  return G.players.map((_,p)=>{
+    let t=0; for(const row of G.scores){const v=row[p]; if(typeof v==='number') t+=v;}
+    if(typeof G.pen[p]==='number') t+=G.pen[p];
+    return t;
+  });
+}
+function currentRound(){
+  for(let r=0;r<G.scores.length;r++){ if(!rowFull(G.scores[r])) return r; }
+  return -1;
+}
+function dealerOf(r){ return G.players[r%G.players.length]; }
+
+function standings(){
+  const tot=totals();
+  const order=G.players.map((name,p)=>({name,p,t:tot[p]})).sort((a,b)=>a.t-b.t);
+  // standing rank per player (ties share a rank), lowest total first
+  const rankOf=[]; let rank=0,prev=null;
+  order.forEach((o,i)=>{ if(o.t!==prev){rank=i+1;prev=o.t;} rankOf[o.p]=rank; });
+  return {tot,order,rankOf,best:order[0].t};
+}
+
+function cellHTML(r,p,v,label){
+  const c=['cell']; if(v!=null&&v<0) c.push('neg'); if(r!=='pen'&&p===r%G.players.length) c.push('dealt');
+  return `<td><input class="${c.join(' ')}" id="c-${r}-${p}" data-r="${r}" data-p="${p}" value="${v==null?'':v}" placeholder="–" size="3" type="text" inputmode="text" enterkeyhint="next" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" dir="ltr" aria-label="${label}"></td>`;
+}
+
+// Full rebuild: only when the grid's shape changes (rows, players, new game).
+function render(keepLayer){
+  normalize();
+  const n=G.players.length;
+  let h='<thead><tr><th class="rcol">الجولة</th>'+G.players.map(p=>`<th>${esc(p)}</th>`).join('')+'</tr></thead><tbody>';
+  for(let r=0;r<G.scores.length;r++){
+    h+=`<tr id="row-${r}" class="${r>0&&r%n===0?'cycle':''}${(r+1)%n===0?' cyc':''}"><td class="rcol"><span class="rn num">${r+1}</span><span class="rd">${esc(dealerOf(r))}</span></td>`;
+    for(let p=0;p<n;p++) h+=cellHTML(r,p,G.scores[r][p],`الجولة ${r+1}، ${esc(G.players[p])}`);
+    h+='</tr>';
+  }
+  h+='<tr class="pen"><td class="rcol"><span class="rn">العقوبات</span></td>';
+  for(let p=0;p<n;p++) h+=cellHTML('pen',p,G.pen[p],`عقوبات ${esc(G.players[p])}`);
+  h+='</tr><tr class="sum"><td class="rcol"><span class="rn">المجموع</span></td>';
+  for(let p=0;p<n;p++) h+=`<td><span class="cell num sumv" id="s-${p}"></span></td>`;
+  h+='</tr><tr class="rank"><td class="rcol"><span class="rn">الترتيب</span></td>';
+  for(let p=0;p<n;p++) h+=`<td><span class="rk num" id="k-${p}"></span></td>`;
+  h+='</tr></tbody>';
+  $('grid').innerHTML=h;
+  refresh(keepLayer);
+}
+
+// Light update after a score changes; leaves the inputs (and keyboard focus) alone.
+function refresh(keepLayer){
+  const {tot,order,rankOf,best}=standings();
+  const cur=currentRound();
+  const over=isOver();
+  const n=G.players.length;
+
+  // status
+  const next=cur<0?G.scores.length:cur;
+  $('status').innerHTML = over
+    ? `<span><b>انتهت القيمة</b> · وصل أحد اللاعبين <span class="num">${G.target}</span></span>`
+    : `<span>الدورة <b class="num">${Math.floor(next/n)+1}</b> · الجولة <b class="num">${next+1}</b> · الحد <span class="num">${G.target}</span></span>`;
+
+  // announce the winner once, the moment the target is reached
+  if(over && !G.announced){ G.announced=true; save(); ui.sheet='win'; keepLayer=false; if(document.activeElement) document.activeElement.blur(); }
+  if(!over && G.announced){ G.announced=false; save(); }
+
+  // winner
+  if(over){
+    const winners=order.filter(o=>o.t===best).map(o=>esc(o.name)).join(' و ');
+    $('winner').innerHTML=`<div class="winner">ملك الجلا <strong>${winners}</strong> بمجموع <span class="num">${fmt(best)}</span></div>`;
+  } else $('winner').innerHTML='';
+
+  // board
+  const dealerIdx=over?-1:next%n;
+  $('board').innerHTML=G.players.map((name,p)=>`<div class="pcard${p===dealerIdx?' deal':''}">
+      <div class="name">${esc(name)}${p===dealerIdx?'<span class="dico" role="img" aria-label="الموزّع" title="الموزّع">♠</span>':''}</div>
+    </div>`).join('');
+
+  // grid: current row, totals, standings
+  for(let r=0;r<G.scores.length;r++){ const tr=$('row-'+r); if(tr) tr.classList.toggle('current', r===cur && !over); }
+  for(let p=0;p<n;p++){
+    $('s-'+p).textContent=fmt(tot[p]);
+    const k=$('k-'+p); k.textContent=rankOf[p]; k.className='rk num r'+Math.min(4,rankOf[p]);
+  }
+
+  // add / remove rows
+  const last=G.scores[G.scores.length-1];
+  $('rowtools').innerHTML = over ? '' :
+    `<button class="btn${cur<0?' primary':''}" data-a="addrow">+ إضافة جولة</button>`+
+    (G.scores.length>n && rowEmpty(last) ? '<button class="btn danger" data-a="delrow">حذف آخر جولة</button>' : '');
+
+  if(!keepLayer) renderLayer();
+}
+
+/* ---------- typing scores straight into the cells ---------- */
+function getVal(r,p){ return r==='pen'?G.pen[p]:G.scores[r][p]; }
+function setVal(r,p,v){ if(r==='pen') G.pen[p]=v; else G.scores[r][p]=v; save(); }
+// Any whole number, positive or negative. Arabic-Indic digits and dash variants are accepted and shown as English.
+function parseScore(s){
+  s=String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+    .replace(/[−–—ـ]/g,'-').replace(/[\s‎‏؜]/g,'');
+  if(s==='') return {ok:true,v:null};
+  if(!/^[+-]?\d{1,6}$/.test(s)) return {ok:false};
+  return {ok:true,v:parseInt(s,10)};
+}
+function cellPos(el){ return {r:el.dataset.r==='pen'?'pen':+el.dataset.r, p:+el.dataset.p}; }
+function commitInput(el){
+  const {r,p}=cellPos(el);
+  const res=parseScore(el.value);
+  if(!res.ok){ el.classList.add('bad'); return false; }
+  el.classList.remove('bad');
+  el.value=res.v==null?'':String(res.v);
+  el.classList.toggle('neg',res.v!=null&&res.v<0);
+  if(getVal(r,p)!==res.v) setVal(r,p,res.v);
+  refresh();
+  return true;
+}
+function nextCell(el){
+  const n=G.players.length; let {r,p}=cellPos(el);
+  if(r==='pen') return p+1<n?$('c-pen-'+(p+1)):null;
+  p++; if(p>=n){p=0;r++;}
+  return r<G.scores.length?$(`c-${r}-${p}`):null;
+}
+function closeSheet(){ ui.sheet=null; render(); }
+
+function renderLayer(){
+  const L=$('layer');
+  if(!ui.sheet){L.hidden=true;L.innerHTML='';return;}
+  L.hidden=false;
+  let inner='';
+  if(ui.sheet==='win'){
+    const tot=totals();
+    const order=G.players.map((name,p)=>({name,t:tot[p]})).sort((a,b)=>a.t-b.t);
+    const best=order[0].t;
+    const winners=order.filter(o=>o.t===best).map(o=>esc(o.name)).join(' و ');
+    const loser=order[order.length-1];
+    L.innerHTML=`<div class="backdrop"></div><div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="wt">
+      <div class="kfan" aria-hidden="true">
+        <div class="kc l"><i>Q</i><b>♦</b></div>
+        <div class="kc r"><i>J</i><b>♣</b></div>
+        <div class="kc k"><i>K</i><b>♠</b><i class="br">K</i></div>
+      </div>
+      <p class="mlabel">ملك الجلا</p>
+      <h2 id="wt">${winners}</h2>
+      <p class="mnote">${esc(loser.name)} وصل <span class="num">${loser.t}</span> وتعدّى الحد <span class="num">${G.target}</span></p>
+      <ol class="final">${order.map(o=>`<li${o.t===best?' class="w"':''}><span>${esc(o.name)}</span><b class="num">${fmt(o.t)}</b></li>`).join('')}</ol>
+      <div class="row2"><button class="btn" data-a="close">عرض الجدول</button><button class="btn primary" id="btnNew2">قيمة جديدة</button></div>
+    </div>`;
+    return;
+  } else if(ui.sheet==='clear'){
+    inner=`<div class="kp-head"><h2>إفراغ الخانات</h2></div>
+      <div class="confirm"><p>بتنمسح كل الأرقام والعقوبات، وتبقى أسماء اللاعبين والحد مثل ما هي.</p>
+      <div class="row2"><button class="btn" data-a="close">رجوع</button><button class="btn primary" style="background:var(--neg);border-color:var(--neg)" data-a="doclear">إفراغ</button></div></div>`;
+  } else if(ui.sheet==='settings'||ui.sheet==='new'){
+    const isNew=ui.sheet==='new';
+    const t=isNew?ui.draft.target:G.target;
+    const names=isNew?ui.draft.players:G.players;
+    const custom=![500,1000].includes(t);
+    inner=`<div class="kp-head"><h2>${isNew?'قيمة جديدة':'الإعدادات'}</h2><button class="btn" data-a="close">${isNew?'إلغاء':'تم'}</button></div>
+      <div class="field"><label>أسماء اللاعبين (بترتيب التوزيع)</label>
+        ${names.map((n,i)=>`<div class="prow"><input id="pn${i}" data-pn="${i}" value="${esc(n)}" maxlength="16" placeholder="اللاعب ${i+1}" aria-label="اسم اللاعب ${i+1}"></div>`).join('')}
+      </div>
+      <div class="field"><label>حد اللعبة (أول واحد يوصله تنتهي القيمة)</label>
+        <div class="seg">
+          <button class="segb${t===500?' on':''}" data-t="500">500</button>
+          <button class="segb${t===1000?' on':''}" data-t="1000">1000</button>
+          <input id="tcustom" class="segi${custom?' on':''}" inputmode="numeric" placeholder="رقم ثاني" value="${custom?t:''}" aria-label="حد مخصص">
+        </div>
+      </div>
+      ${isNew?`<div class="confirm"><p>بتنمسح كل النقاط الحالية وتبدأ قيمة جديدة.</p>
+      <div class="row2"><button class="btn" data-a="close">رجوع</button><button class="btn primary" data-a="donew">ابدأ القيمة</button></div></div>`:''}`;
+  }
+  L.innerHTML=`<div class="backdrop" data-a="close"></div><div class="sheet" role="dialog" aria-modal="true"><div class="sheet-in">${inner}</div></div>`;
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button,[data-a]'); if(!t) return;
+  wake();
+  if(t.id==='btnSettings'){ ui.sheet='settings'; renderLayer(); return; }
+  if(t.id==='btnClear'){ if(document.activeElement) document.activeElement.blur(); ui.sheet='clear'; renderLayer(); return; }
+  if(t.id==='btnNew'||t.id==='btnNew2'){ ui.draft={players:G.players.slice(),target:G.target}; ui.sheet='new'; renderLayer(); return; }
+  if(t.dataset.t){ setTarget(+t.dataset.t); renderLayer(); return; }
+  const a=t.dataset.a;
+  if(a==='close'){ closeSheet(); }
+  else if(a==='addrow'){ addRow(); render(); const c=$(`c-${G.scores.length-1}-0`); if(c) c.focus(); }
+  else if(a==='delrow'){ G.scores.pop(); save(); render(); }
+  else if(a==='doclear'){ G.scores=[]; G.pen=G.players.map(()=>null); G.announced=false; save(); closeSheet(); }
+  else if(a==='donew'){
+    G=blank(ui.draft.players.map((n,i)=>n.trim()||('اللاعب '+(i+1))),ui.draft.target); save(); closeSheet();
+  }
+});
+function setTarget(v){
+  if(!(v>0)) return;
+  if(ui.sheet==='new') ui.draft.target=v; else { G.target=v; save(); renderBehind(); }
+}
+document.addEventListener('input',e=>{
+  // auto-save: store each digit as it's typed (totals update when the cell is finished)
+  if(e.target.matches && e.target.matches('input.cell')){
+    const {r,p}=cellPos(e.target), res=parseScore(e.target.value);
+    if(res.ok){ e.target.classList.remove('bad'); if(getVal(r,p)!==res.v) setVal(r,p,res.v); }
+    return;
+  }
+  const d=e.target.dataset||{};
+  if(d.pn!==undefined){
+    const i=+d.pn, v=e.target.value;
+    if(ui.sheet==='new') ui.draft.players[i]=v;
+    else { G.players[i]=v.trim()||('اللاعب '+(i+1)); save(); renderBehind(); }
+  }
+  if(e.target.id==='tcustom'){
+    const v=parseInt(e.target.value.replace(/[^0-9]/g,''),10);
+    if(v>0){ setTarget(v); document.querySelectorAll('.segb').forEach(b=>b.classList.remove('on')); e.target.classList.add('on'); }
+  }
+});
+// Settings edits update the grid underneath without touching the open sheet.
+function renderBehind(){ render(true); }
+
+document.addEventListener('change',e=>{ if(e.target.matches('input.cell')) commitInput(e.target); });
+document.addEventListener('focusin',e=>{ if(e.target.matches('input.cell')){ wake(); try{ e.target.select(); }catch(_){} } });
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&ui.sheet){ closeSheet(); return; }
+  const el=e.target;
+  if(e.key==='Enter' && el.matches && el.matches('input.cell')){
+    e.preventDefault();
+    if(!commitInput(el)) return;
+    if(ui.sheet==='win') return;
+    const nx=nextCell(el);
+    if(nx) nx.focus(); else el.blur();
+  }
+});
+
+/* keep the screen on during play */
+let lock=null;
+async function wake(){ try{ if(!lock&&navigator.wakeLock){ lock=await navigator.wakeLock.request('screen'); lock.addEventListener('release',()=>lock=null);} }catch(e){} }
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') wake(); else save(); });
+window.addEventListener('pagehide',()=>save());
+
+render();
+
+/* splash: hold ~2.6s (tap to skip), then fade into the scorecard */
+const sp=$('splash');
+let gone=false;
+function hideSplash(){ if(gone) return; gone=true; sp.classList.add('out'); setTimeout(()=>sp.remove(),500); }
+sp.addEventListener('click',e=>{ e.stopPropagation(); hideSplash(); });
+setTimeout(hideSplash, matchMedia('(prefers-reduced-motion: reduce)').matches?1400:2600);
+})();
+</script>
+
+</body></html>
