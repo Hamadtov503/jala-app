@@ -390,12 +390,18 @@ function commitInput(el){
   el.value=res.v==null?'':String(res.v);
   el.classList.toggle('neg',res.v!=null&&res.v<0);
   if(getVal(r,p)!==res.v) setVal(r,p,res.v);
-  // −40 in a round: everyone else in that round gets 100
+  // Round rules: −40 → everyone else 100; −80 → everyone else 200;
+  // all players but one entered with ordinary (non-negative) scores → the last one gets −20.
   let filled=false;
-  if(r!=='pen' && res.v===-40 && el.dataset.f!=='1'){
-    el.dataset.f='1';
-    G.players.forEach((_,q)=>{ if(q!==p){ G.scores[r][q]=100; const c=$(`c-${r}-${q}`); if(c){ c.value='100'; c.classList.remove('neg','bad'); } } });
+  const put=(q,v)=>{ G.scores[r][q]=v; const c=$(`c-${r}-${q}`); if(c){ c.value=String(v); c.classList.toggle('neg',v<0); c.classList.remove('bad'); } };
+  const BONUS={'-40':100,'-80':200};
+  if(r!=='pen' && BONUS[res.v]!==undefined && el.dataset.f!==String(res.v)){
+    el.dataset.f=String(res.v);
+    G.players.forEach((_,q)=>{ if(q!==p) put(q,BONUS[res.v]); });
     save(); filled=true;
+  } else if(r!=='pen' && res.v!=null){
+    const row=G.scores[r], empty=row.map((v,q)=>v==null?q:-1).filter(q=>q>=0);
+    if(empty.length===1 && row.every(v=>v==null||v>=0)){ put(empty[0],-20); save(); filled=true; }
   }
   refresh();
   return filled?'filled':true;
@@ -512,7 +518,7 @@ document.addEventListener('input',e=>{
     let s=raw.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[−–—ـ]/g,'-');
     const neg=/^\s*[-]/.test(s); s=s.replace(/[^0-9]/g,'').slice(0,6); s=(neg?'-':'')+s;
     if(s!==raw) el.value=s;
-    if(s!=='-40') delete el.dataset.f;
+    if(el.dataset.f && s!==el.dataset.f) delete el.dataset.f;
     const {r,p}=cellPos(el), res=parseScore(s);
     if(res.ok){ e.target.classList.remove('bad'); if(getVal(r,p)!==res.v) setVal(r,p,res.v); }
     return;
