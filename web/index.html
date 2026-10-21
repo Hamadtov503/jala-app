@@ -203,6 +203,11 @@ input.cell{direction:ltr;unicode-bidi:plaintext}
 #grid th:not(:last-child),#grid td:not(:last-child){border-left:1px solid var(--line)}
 #grid tr.pen td:not(:last-child){border-left-color:color-mix(in srgb,var(--pen-ink) 22%,transparent)}
 #grid tr.sum td:not(:last-child){border-left-color:color-mix(in srgb,var(--navy-ink) 22%,transparent)}
+thead th .dico{width:13px;height:18px;font-size:9px;margin-inline-start:4px;vertical-align:-3px;border-color:var(--felt-ink)}
+.tieb{color:var(--neg)}
+th.rcol{text-align:right}
+.rk.blank{visibility:hidden}
+.rcol .rd{font-size:13px;font-weight:600;color:var(--ink);max-width:none}
 thead th.turn{background:var(--felt);color:var(--felt-ink);font-weight:700}
 .btn.icon.on{background:var(--felt);color:var(--felt-ink);border-color:var(--felt)}
 </style>
@@ -261,10 +266,15 @@ function save(){
    are added one at a time. The game ends once a filled sheet puts anyone at or over the target. */
 const rowFull=r=>r.every(v=>v!=null);
 const rowEmpty=r=>r.every(v=>v==null);
-function isOver(){
+function reached(){
   const any=G.scores.some(rowFull);
   const noHalf=G.scores.every(r=>rowFull(r)||rowEmpty(r));
   return any && noHalf && Math.max(...totals())>=G.target;
+}
+// two or more players level on the lowest total
+function topTied(){ const t=totals().slice().sort((a,b)=>a-b); return t.length>1 && t[0]===t[1]; }
+function isOver(){
+  return reached() && !topTied();
 }
 function normalize(){
   while(G.scores.length<G.players.length) G.scores.push(G.players.map(()=>null));
@@ -297,7 +307,7 @@ function standings(){
   const order=G.players.map((name,p)=>({name,p,t:tot[p]})).sort((a,b)=>a.t-b.t);
   // standing rank per player (ties share a rank), lowest total first
   const rankOf=[]; let rank=0,prev=null;
-  order.forEach((o,i)=>{ if(o.t!==prev){rank=i+1;prev=o.t;} rankOf[o.p]=rank; });
+  order.forEach(o=>{ if(o.t!==prev){rank++;prev=o.t;} rankOf[o.p]=rank; });
   return {tot,order,rankOf,best:order[0].t};
 }
 
@@ -310,9 +320,9 @@ function cellHTML(r,p,v,label){
 function render(keepLayer){
   normalize();
   const n=G.players.length;
-  let h='<thead><tr><th class="rcol">الجولة</th>'+G.players.map((p,i)=>`<th id="h-${i}">${esc(p)}</th>`).join('')+'</tr></thead><tbody>';
+  let h='<thead><tr><th class="rcol">الموزّع</th>'+G.players.map((p,i)=>`<th id="h-${i}">${esc(p)}</th>`).join('')+'</tr></thead><tbody>';
   for(let r=0;r<G.scores.length;r++){
-    h+=`<tr id="row-${r}" class="${r>0&&r%n===0?'cycle':''}${(r+1)%n===0?' cyc':''}"><td class="rcol"><span class="rn num">${r+1}</span><span class="rd">${esc(dealerOf(r))}</span></td>`;
+    h+=`<tr id="row-${r}" class="${r>0&&r%n===0?'cycle':''}${(r+1)%n===0?' cyc':''}"><td class="rcol"><span class="rd">${esc(dealerOf(r))}</span></td>`;
     for(let p=0;p<n;p++) h+=cellHTML(r,p,G.scores[r][p],`الجولة ${r+1}، ${esc(G.players[p])}`);
     h+='</tr>';
   }
@@ -334,9 +344,15 @@ function refresh(keepLayer){
   const over=isOver();
   const n=G.players.length;
 
+  // target reached but first place is shared: add a deciding round straight away
+  const tie=reached() && topTied();
+  if(tie && rowFull(G.scores[G.scores.length-1])){ addRow(); render(keepLayer); return; }
+
   // status
   const next=cur<0?G.scores.length:cur;
-  $('status').innerHTML = over
+  $('status').innerHTML = tie
+    ? `<span><b class="tieb">تعادل على المركز الأول</b> · جولة فاصلة لتحديد الفايز</span>`
+    : over
     ? `<span><b>انتهت القيمة</b> · وصل أحد اللاعبين <span class="num">${G.target}</span></span>`
     : `<span>الدورة <b class="num">${Math.floor(next/n)+1}</b> · الجولة <b class="num">${next+1}</b> · الحد <span class="num">${G.target}</span></span>`;
 
@@ -352,20 +368,24 @@ function refresh(keepLayer){
 
   // whose turn it is: their name in the table header turns green
   const dealerIdx=over?-1:next%n;
-  for(let p=0;p<n;p++){ const th=$('h-'+p); if(th) th.classList.toggle('turn', p===dealerIdx); }
+  for(let p=0;p<n;p++){ const th=$('h-'+p); if(th){ th.classList.toggle('turn', p===dealerIdx); th.innerHTML=esc(G.players[p])+(p===dealerIdx?'<span class="dico" role="img" aria-label="الموزّع" title="الموزّع">♠</span>':''); } }
 
   // grid: current row, totals, standings
+  const started=G.scores.some(r=>r.some(v=>v!=null))||G.pen.some(v=>v!=null);
   for(let r=0;r<G.scores.length;r++){ const tr=$('row-'+r); if(tr) tr.classList.toggle('current', r===cur && !over); }
   for(let p=0;p<n;p++){
     $('s-'+p).textContent=fmt(tot[p]);
-    const k=$('k-'+p); k.textContent=rankOf[p]; k.className='rk num r'+Math.min(4,rankOf[p]);
+    // ranks appear only once scoring has started
+    const k=$('k-'+p);
+    if(started){ k.textContent=rankOf[p]; k.className='rk num r'+Math.min(4,rankOf[p]); }
+    else { k.textContent=''; k.className='rk num blank'; }
   }
 
   // add / remove rows
   const last=G.scores[G.scores.length-1];
   $('rowtools').innerHTML = over ? '' :
     `<button class="btn${cur<0?' primary':''}" data-a="addrow">+ إضافة جولة</button>`+
-    (G.scores.length>n && rowEmpty(last) ? '<button class="btn danger" data-a="delrow">حذف آخر جولة</button>' : '');
+    (G.scores.length>n && rowEmpty(last) && !tie ? '<button class="btn danger" data-a="delrow">حذف آخر جولة</button>' : '');
 
   if(!keepLayer) renderLayer();
 }
@@ -477,10 +497,11 @@ function announce(btn){
   order.forEach(o=>{ const g=groups[groups.length-1]; if(g&&g.t===o.t) g.names.push(o.name); else groups.push({rank:rankOf[o.p],t:o.t,names:[o.name]}); });
   const text=groups.map(g=>`${ORD[g.rank-1]||('رقم '+g.rank)}، ${g.names.join(' و ')}، ${say(g.t)}`).join('. ')+'.';
   const u=new SpeechSynthesisUtterance(text);
-  u.lang='ar-SA'; u.rate=1.15;
-  // prefer a Saudi voice (on iPhone: Majed / ماجد), then any Arabic voice
-  const vs=S.getVoices();
-  const v=vs.find(v=>/^ar[-_]SA/i.test(v.lang)&&/maged|majed|ماجد/i.test(v.name))||vs.find(v=>/^ar[-_]SA/i.test(v.lang))||vs.find(v=>/^ar/i.test(v.lang));
+  u.lang='ar-SA'; u.rate=1.35; u.pitch=0.85;
+  // original voice choice (first Arabic voice), but a male one when the device has it
+  const vs=S.getVoices().filter(v=>/^ar/i.test(v.lang));
+  const MALE=/maged|majed|tarik|tariq|hamed|hamid|naayf|nayef|omar|shakir|fahed|zayd|ماجد|طارق|حامد|نايف/i;
+  const v=vs.find(v=>MALE.test(v.name))||vs[0];
   if(v) u.voice=v;
   u.onend=u.onerror=()=>btn.classList.remove('on');
   btn.classList.add('on');
