@@ -211,6 +211,8 @@ tr.current .rcol .rd{color:var(--felt-ink)}
 .tieb{color:var(--neg)}
 th.rcol{text-align:right}
 .rk.blank{visibility:hidden}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+thead th,.rcol .rd{text-overflow:clip}
 .rcol .rd{font-size:13px;font-weight:600;color:var(--ink);max-width:none}
 thead th.turn{background:var(--felt);color:var(--felt-ink);font-weight:700}
 .btn.icon.on{background:var(--felt);color:var(--felt-ink);border-color:var(--felt)}
@@ -339,7 +341,17 @@ function render(keepLayer){
   h+='</tr></tbody>';
   $('grid').innerHTML=h;
   refresh(keepLayer);
+  fitNames();
 }
+// shrink any long name (header or side column) just enough to show it in full
+function fitNames(){
+  document.querySelectorAll('#grid thead th, #grid .rcol .rd').forEach(el=>{
+    el.style.fontSize='';
+    let fs=parseFloat(getComputedStyle(el).fontSize);
+    while(el.scrollWidth>el.clientWidth+1 && fs>9){ fs-=0.5; el.style.fontSize=fs+'px'; }
+  });
+}
+addEventListener('resize',()=>fitNames());
 
 // Light update after a score changes; leaves the inputs (and keyboard focus) alone.
 function refresh(keepLayer){
@@ -372,7 +384,7 @@ function refresh(keepLayer){
 
   // whose turn it is: their name in the table header turns green
   const dealerIdx=over?-1:next%n;
-  for(let p=0;p<n;p++){ const th=$('h-'+p); if(th){ th.classList.toggle('turn', p===dealerIdx); th.innerHTML=esc(G.players[p])+(p===dealerIdx?'<span class="joker" role="img" aria-label="الموزّع" title="الموزّع">🃏</span>':''); } }
+  for(let p=0;p<n;p++){ const th=$('h-'+p); if(th){ const was=th.classList.contains('turn'); th.classList.toggle('turn', p===dealerIdx); th.innerHTML=esc(G.players[p])+(p===dealerIdx?'<span class="joker" role="img" aria-label="الموزّع" title="الموزّع">🃏</span>':''); if(was!==(p===dealerIdx)) requestAnimationFrame(fitNames); } }
 
   // grid: current row, totals, standings
   const started=G.scores.some(r=>r.some(v=>v!=null))||G.pen.some(v=>v!=null);
