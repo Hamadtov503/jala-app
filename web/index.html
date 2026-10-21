@@ -344,6 +344,8 @@ function render(keepLayer){
   fitNames();
 }
 // shrink any long name (header or side column) just enough to show it in full
+let tapped=null;
+document.addEventListener('pointerdown',e=>{ tapped=e.target.matches&&e.target.matches('input.cell')?e.target.id:null; },true);
 function fitNames(){
   document.querySelectorAll('#grid thead th, #grid .rcol .rd').forEach(el=>{
     el.style.fontSize='';
@@ -362,7 +364,14 @@ function refresh(keepLayer){
 
   // target reached but first place is shared: add a deciding round straight away
   const tie=reached() && topTied();
-  if(tie && rowFull(G.scores[G.scores.length-1])){ addRow(); render(keepLayer); return; }
+  // every round filled and the game isn't over (limit not reached, or a tie for first): open the next round
+  if(!over && rowFull(G.scores[G.scores.length-1])){
+    addRow(); render(keepLayer);
+    // if a cell was just tapped while the grid rebuilt, put the cursor back in it
+    const t=tapped; tapped=null;
+    if(t) setTimeout(()=>{ const c=$(t); if(c && document.activeElement!==c && (!document.activeElement||document.activeElement===document.body)) c.focus(); },0);
+    return;
+  }
 
   // status
   const next=cur<0?G.scores.length:cur;
@@ -401,7 +410,7 @@ function refresh(keepLayer){
   const last=G.scores[G.scores.length-1];
   $('rowtools').innerHTML = over ? '' :
     `<button class="btn${cur<0?' primary':''}" data-a="addrow">+ إضافة جولة</button>`+
-    (G.scores.length>n && rowEmpty(last) && !tie ? '<button class="btn danger" data-a="delrow">حذف آخر جولة</button>' : '');
+    (G.scores.length>n && rowEmpty(last) && rowEmpty(G.scores[G.scores.length-2]) && !tie ? '<button class="btn danger" data-a="delrow">حذف آخر جولة</button>' : '');
 
   if(!keepLayer) renderLayer();
 }
