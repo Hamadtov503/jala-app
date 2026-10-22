@@ -446,7 +446,12 @@ function commitInput(el){
     save(); filled=true;
   } else if(r!=='pen' && res.v!=null){
     const row=G.scores[r], empty=row.map((v,q)=>v==null?q:-1).filter(q=>q>=0);
-    if(empty.length===1 && row.every(v=>v==null||v>=0)){ put(empty[0],-20); save(); filled=true; }
+    // the reverse of the bonus rule: all others 100 → −40, all others 200 → −80, otherwise −20
+    if(empty.length===1 && row.every(v=>v==null||v>=0)){
+      const others=row.filter(v=>v!=null);
+      const last=others.every(v=>v===100)?-40:others.every(v=>v===200)?-80:-20;
+      put(empty[0],last); save(); filled=true;
+    }
   }
   refresh();
   return filled?'filled':true;
