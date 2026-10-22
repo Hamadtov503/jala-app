@@ -215,6 +215,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 thead th,.rcol .rd{text-overflow:clip}
 .rcol .rd{font-size:13px;font-weight:600;color:var(--ink);max-width:none}
 thead th.turn{background:var(--felt);color:var(--felt-ink);font-weight:700}
+.btn.icon:disabled{opacity:.35;cursor:default}
 .btn.icon.on{background:var(--felt);color:var(--felt-ink);border-color:var(--felt)}
 </style>
 
@@ -232,6 +233,7 @@ thead th.turn{background:var(--felt);color:var(--felt-ink);font-weight:700}
   <header>
     <div class="brand"><h1>جلا</h1></div>
     <div class="tools">
+      <button class="btn icon" id="btnUndo" aria-label="رجوع خطوة" title="رجوع خطوة (حتى 4 خطوات)" disabled><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg></button>
       <button class="btn icon danger" id="btnClear" aria-label="إفراغ الخانات" title="إفراغ الخانات"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
       <button class="btn icon" id="btnSpeak" aria-label="إعلان النتائج" title="إعلان النتائج"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg></button>
       <button class="btn icon" id="btnSettings" aria-label="الإعدادات" title="الإعدادات"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
@@ -288,6 +290,25 @@ function normalize(){
 function addRow(){ G.scores.push(G.players.map(()=>null)); save(); }
 
 let G=load();
+const UKEY='jala-undo-v1', UMAX=4;
+let undoStack=[]; try{ undoStack=JSON.parse(localStorage.getItem(UKEY))||[]; }catch(e){}
+let lastState=JSON.stringify(G);
+// call after any finished change: the state before it becomes one undo step
+function step(){
+  const now=JSON.stringify(G);
+  if(now===lastState) return;
+  undoStack.push(lastState); if(undoStack.length>UMAX) undoStack.shift();
+  lastState=now; try{ localStorage.setItem(UKEY,JSON.stringify(undoStack)); }catch(e){}
+  updUndo();
+}
+function undo(){
+  if(!undoStack.length) return;
+  if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  lastState=undoStack.pop(); G=JSON.parse(lastState);
+  try{ localStorage.setItem(UKEY,JSON.stringify(undoStack)); }catch(e){}
+  ui.sheet=null; save(); render(); updUndo();
+}
+function updUndo(){ const b=document.getElementById('btnUndo'); if(b) b.disabled=!undoStack.length; }
 let edit=null; // {r: number|'pen', p: number, buf: string, fresh: bool}
 let ui={sheet:null, confirmNew:false};
 
@@ -454,6 +475,7 @@ function commitInput(el){
     }
   }
   refresh();
+  step();
   return filled?'filled':true;
 }
 function nextCell(el){
@@ -543,18 +565,19 @@ try{ speechSynthesis.getVoices(); }catch(e){}
 document.addEventListener('click',e=>{
   const t=e.target.closest('button,[data-a]'); if(!t) return;
   wake();
+  if(t.id==='btnUndo'){ undo(); return; }
   if(t.id==='btnSpeak'){ announce(t); return; }
   if(t.id==='btnSettings'){ ui.sheet='settings'; renderLayer(); return; }
   if(t.id==='btnClear'){ if(document.activeElement) document.activeElement.blur(); ui.sheet='clear'; renderLayer(); return; }
   if(t.id==='btnNew'||t.id==='btnNew2'){ ui.draft={players:G.players.slice(),target:G.target}; ui.sheet='new'; renderLayer(); return; }
   if(t.dataset.t){ setTarget(+t.dataset.t); renderLayer(); return; }
   const a=t.dataset.a;
-  if(a==='close'){ closeSheet(); }
-  else if(a==='addrow'){ addRow(); render(); const c=$(`c-${G.scores.length-1}-0`); if(c) c.focus(); }
-  else if(a==='delrow'){ G.scores.pop(); save(); render(); }
-  else if(a==='doclear'){ G.scores=[]; G.pen=G.players.map(()=>null); G.announced=false; save(); closeSheet(); }
+  if(a==='close'){ closeSheet(); step(); }
+  else if(a==='addrow'){ addRow(); render(); step(); const c=$(`c-${G.scores.length-1}-0`); if(c) c.focus(); }
+  else if(a==='delrow'){ G.scores.pop(); save(); render(); step(); }
+  else if(a==='doclear'){ G.scores=[]; G.pen=G.players.map(()=>null); G.announced=false; save(); closeSheet(); step(); }
   else if(a==='donew'){
-    G=blank(ui.draft.players.map((n,i)=>n.trim()||('اللاعب '+(i+1))),ui.draft.target); save(); closeSheet();
+    G=blank(ui.draft.players.map((n,i)=>n.trim()||('اللاعب '+(i+1))),ui.draft.target); save(); closeSheet(); step();
   }
 });
 function setTarget(v){
@@ -612,6 +635,7 @@ document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==
 window.addEventListener('pagehide',()=>save());
 
 render();
+lastState=JSON.stringify(G); updUndo();
 
 /* splash: hold ~2.6s (tap to skip), then fade into the scorecard */
 const sp=$('splash');
