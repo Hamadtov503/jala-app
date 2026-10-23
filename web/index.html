@@ -199,6 +199,7 @@ tr.rank td{background:var(--sunk);border-bottom:0;height:44px}
 .rowtools .btn{height:44px;padding:0 18px}
 .rowtools .btn.addrow{width:58px;height:58px;padding:0;border-radius:16px;display:grid;place-items:center;color:var(--felt);border-color:color-mix(in srgb,var(--felt) 40%,var(--line))}
 .rowtools .btn.addrow.primary{color:var(--felt-ink)}
+.rowtools .btn.delrow{color:var(--neg);border-color:color-mix(in srgb,var(--neg) 35%,var(--line))}
 .credit{margin-top:8px;text-align:center;font-size:13px;color:var(--muted);letter-spacing:.02em}
 .err{margin:0;color:var(--neg);font-size:13px;text-align:center}
 .seg{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:6px}
@@ -504,7 +505,7 @@ function refresh(keepLayer){
   const last=G.scores[G.scores.length-1];
   $('rowtools').innerHTML = over ? '' :
     `<button class="btn addrow${cur<0?' primary':''}" data-a="addrow" aria-label="إضافة جولة" title="إضافة جولة"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 10h18"/><path d="M12 13v5M9.5 15.5h5"/></svg></button>`+
-    (G.scores.length>n && rowEmpty(last) && rowEmpty(G.scores[G.scores.length-2]) && !tie ? '<button class="btn danger" data-a="delrow">حذف آخر جولة</button>' : '');
+    (G.scores.length>n && rowEmpty(last) && rowEmpty(G.scores[G.scores.length-2]) && !tie ? '<button class="btn addrow delrow" data-a="delrow" aria-label="حذف آخر جولة" title="حذف آخر جولة"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 10h18"/><path d="M9.5 15.5h5"/></svg></button>' : '');
 
   if(!keepLayer) renderLayer();
 }
