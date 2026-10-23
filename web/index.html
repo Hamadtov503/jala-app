@@ -43,6 +43,11 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .vb.rec{color:var(--neg);font-size:18px}
 .vrow.recording .vb.rec{background:var(--neg);color:#fff;border-color:var(--neg)}
 .vb.del{color:var(--muted)}
+.seatno{width:22px;flex:none;text-align:center;font-weight:700;color:var(--muted)}
+.prow input.seaton{border-color:var(--felt);box-shadow:0 0 0 2px color-mix(in srgb,var(--felt) 25%,transparent);background:var(--surface)}
+.chips2{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.chip2{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-weight:600;font-size:14px}
+.chip2.used{background:var(--felt-soft);border-color:color-mix(in srgb,var(--felt) 40%,var(--line));color:var(--felt)}
 .strow{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .sharebtn{display:inline-flex;align-items:center;gap:6px;flex:none;height:34px;padding:0 12px;font-size:13px;font-weight:600;color:var(--felt);border-color:color-mix(in srgb,var(--felt) 35%,var(--line))}
 .linkbox{width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--sunk);color:var(--ink);font:inherit;font-size:13px;padding:0 12px;direction:ltr;text-align:left}
@@ -270,6 +275,7 @@ thead th.turn{background:var(--felt);color:var(--felt-ink);font-weight:700}
 <script>
 (function(){
 const KEY='jala-game-v2';
+const ROSTER=['بو بداح','حمد','صالح','عمر','حميدي','عبدالعزيز','عبدالمجيد','سالم','محمد','سعد','بو سلمان','علي'];
 const QUICK=[-40,-20,0,10,20,30,40,50,60,70,80,90,100,110,120,130];
 
 function sample(){ return blank(['بو بداح','عمر','علي','محمد'],500); }
@@ -598,8 +604,10 @@ function renderLayer(){
     const names=isNew?ui.draft.players:G.players;
     const custom=![500,1000].includes(t);
     inner=`<div class="kp-head"><h2>${isNew?'قيمة جديدة':'الإعدادات'}</h2><button class="btn" data-a="close">${isNew?'إلغاء':'تم'}</button></div>
-      <div class="field"><label>أسماء اللاعبين (بترتيب التوزيع)</label>
-        ${names.map((n,i)=>`<div class="prow"><input id="pn${i}" data-pn="${i}" value="${esc(n)}" maxlength="16" placeholder="اللاعب ${i+1}" aria-label="اسم اللاعب ${i+1}"></div>`).join('')}
+      <div class="field"><label>اللاعبين بترتيب التوزيع: اختر الخانة ثم اضغط الاسم</label>
+        ${names.map((n,i)=>`<div class="prow"><span class="seatno num">${i+1}</span><input id="pn${i}" data-pn="${i}" class="${(ui.seat||0)===i?'seaton':''}" value="${esc(n)}" maxlength="16" placeholder="اختر أو اكتب اسم" aria-label="اللاعب ${i+1}"><button class="x" data-a="seatclear" data-i="${i}" aria-label="مسح اللاعب ${i+1}">✕</button></div>`).join('')}
+        <div class="chips2">${ROSTER.map(nm=>`<button class="chip2${names.includes(nm)?' used':''}" data-a="pick" data-n="${esc(nm)}">${esc(nm)}</button>`).join('')}</div>
+        <p class="hint" style="text-align:right">لاعب من برّا؟ اكتب اسمه في الخانة على طول.</p>
       </div>
       <div class="field"><label>حد اللعبة (أول واحد يوصله تنتهي القيمة)</label>
         <div class="seg">
@@ -717,6 +725,19 @@ document.addEventListener('click',e=>{
   wake();
   if(t.id==='btnUndo'){ undo(); return; }
   if(t.id==='btnShare'){ shareGame(); return; }
+  if(t.dataset.a==='pick' || t.dataset.a==='seatclear'){
+    const isNew=ui.sheet==='new', names=isNew?ui.draft.players:G.players;
+    if(t.dataset.a==='seatclear'){ const i=+t.dataset.i; names[i]=''; ui.seat=i; }
+    else{
+      const nm=t.dataset.n, i=ui.seat||0, j=names.indexOf(nm);
+      if(j>=0 && j!==i) names[j]=names[i];          // already seated elsewhere: swap
+      names[i]=nm;
+      const empty=names.findIndex((v,k)=>k>i && !String(v).trim());
+      ui.seat = empty>=0 ? empty : Math.min(i+1, names.length-1);
+    }
+    if(!isNew){ G.players=G.players.map((v,k)=>String(v).trim()||('اللاعب '+(k+1))); save(); renderBehind(); }
+    renderLayer(); return;
+  }
   if(t.dataset.a==='vrec'){ startRec(t.dataset.k); return; }
   if(t.dataset.a==='vplay'){ const tok={}; audioCtx(); playClip(t.dataset.k,tok); return; }
   if(t.dataset.a==='vdel'){ delete VOICE[t.dataset.k]; delete clipCache[t.dataset.k]; saveVoice(); renderLayer(); return; }
@@ -735,9 +756,9 @@ document.addEventListener('click',e=>{
     return;
   }
   if(t.id==='btnSpeak'){ announce(t); return; }
-  if(t.id==='btnSettings'){ ui.sheet='settings'; renderLayer(); return; }
+  if(t.id==='btnSettings'){ ui.seat=0; ui.sheet='settings'; renderLayer(); return; }
   if(t.id==='btnClear'){ if(document.activeElement) document.activeElement.blur(); ui.sheet='clear'; renderLayer(); return; }
-  if(t.id==='btnNew'||t.id==='btnNew2'){ ui.draft={players:G.players.slice(),target:G.target}; ui.sheet='new'; renderLayer(); return; }
+  if(t.id==='btnNew'||t.id==='btnNew2'){ ui.draft={players:G.players.slice(),target:G.target}; ui.seat=0; ui.sheet='new'; renderLayer(); return; }
   if(t.dataset.t){ setTarget(+t.dataset.t); renderLayer(); return; }
   const a=t.dataset.a;
   if(a==='close'){ closeSheet(); step(); }
@@ -745,7 +766,7 @@ document.addEventListener('click',e=>{
   else if(a==='delrow'){ G.scores.pop(); save(); render(); step(); }
   else if(a==='doclear'){ G.scores=[]; G.pen=G.players.map(()=>null); G.announced=false; save(); closeSheet(); step(); }
   else if(a==='donew'){
-    G=blank(ui.draft.players.map((n,i)=>n.trim()||('اللاعب '+(i+1))),ui.draft.target); save(); closeSheet(); step();
+    G=blank(ui.draft.players.map((n,i)=>String(n).trim()||('اللاعب '+(i+1))),ui.draft.target); save(); closeSheet(); step();
   }
 });
 function setTarget(v){
@@ -770,6 +791,8 @@ document.addEventListener('input',e=>{
     const i=+d.pn, v=e.target.value;
     if(ui.sheet==='new') ui.draft.players[i]=v;
     else { G.players[i]=v.trim()||('اللاعب '+(i+1)); save(); renderBehind(); }
+    const nm2=ui.sheet==='new'?ui.draft.players:G.players;
+    document.querySelectorAll('.chip2').forEach(c=>c.classList.toggle('used', nm2.includes(c.dataset.n)));
   }
   if(e.target.id==='tcustom'){
     const v=parseInt(e.target.value.replace(/[^0-9]/g,''),10);
@@ -780,7 +803,8 @@ document.addEventListener('input',e=>{
 function renderBehind(){ render(true); }
 
 document.addEventListener('change',e=>{ if(e.target.matches('input.cell')) commitInput(e.target); });
-document.addEventListener('focusin',e=>{ if(e.target.matches('input.cell')){ wake(); try{ e.target.select(); }catch(_){} } });
+document.addEventListener('focusin',e=>{
+  if(e.target.dataset && e.target.dataset.pn!==undefined){ ui.seat=+e.target.dataset.pn; document.querySelectorAll('[data-pn]').forEach(x=>x.classList.toggle('seaton',x===e.target)); } if(e.target.matches('input.cell')){ wake(); try{ e.target.select(); }catch(_){} } });
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&ui.sheet){ closeSheet(); return; }
   const el=e.target;
