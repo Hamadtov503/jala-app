@@ -48,8 +48,9 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .chips2{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 .chip2{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-weight:600;font-size:14px}
 .chip2.used{background:var(--felt-soft);border-color:color-mix(in srgb,var(--felt) 40%,var(--line));color:var(--felt)}
-.tools.sm{gap:6px;flex:none}
-.tools.sm .btn.icon{width:38px;height:38px}
+/* bottom row matches the top row exactly so the icons stack in columns */
+.tools,.tools.sm{gap:8px;flex:none}
+.tools.sm .btn.icon{width:42px;height:42px}
 .strow{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .sharebtn{display:inline-flex;align-items:center;gap:6px;flex:none;height:34px;padding:0 12px;font-size:13px;font-weight:600;color:var(--felt);border-color:color-mix(in srgb,var(--felt) 35%,var(--line))}
 .linkbox{width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--sunk);color:var(--ink);font:inherit;font-size:13px;padding:0 12px;direction:ltr;text-align:left}
@@ -148,7 +149,7 @@ h2{font-family:var(--display);font-size:22px;margin:0;color:var(--felt)}
 .word .en{font-family:Georgia,"Times New Roman",serif;font-size:22px;letter-spacing:.35em;padding-left:.35em;color:var(--gold)}
 @keyframes rise{to{opacity:1;transform:none}}
 /* the group's verse under the name */
-.verse{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:-6px;padding:0 24px;text-align:center;font-family:"Aref Ruqaa","Times New Roman",serif;font-weight:700;font-size:22px;line-height:1.5;color:var(--gold);opacity:0;transform:translateY(10px);animation:rise .7s ease-out 1.8s forwards}
+.verse{position:absolute;left:0;right:0;bottom:calc(48px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 24px;text-align:center;font-family:"Aref Ruqaa","Times New Roman",serif;font-weight:700;font-size:22px;line-height:1.5;color:var(--gold);opacity:0;transform:translateY(10px);animation:rise .7s ease-out 1.8s forwards}
 .verse span:last-child{color:var(--pen)}
 @media (prefers-reduced-motion:reduce){.pc{animation:none;transform:var(--to);opacity:1}.word,.verse{animation:none;opacity:1;transform:none}}
 
