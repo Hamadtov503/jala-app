@@ -202,7 +202,8 @@ tr.rank td{background:var(--sunk);border-bottom:0;height:44px}
 /* delete round: red button, icon = a round row being crossed out */
 .rowtools .btn.addrow.delrow{background:var(--neg);color:#fff;border-color:var(--neg)}
 .rowtools .btn.delrow{color:var(--neg);border-color:color-mix(in srgb,var(--neg) 35%,var(--line))}
-.app{min-height:100vh;min-height:100dvh}
+/* fill exactly one screen (minus the notch and home-bar areas the page already pads for) so the credit sits at the bottom without scrolling */
+.app{min-height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding-bottom:10px}
 .credit{margin-top:auto;padding-top:16px;text-align:center;font-size:13px;color:var(--muted);letter-spacing:.02em}
 .err{margin:0;color:var(--neg);font-size:13px;text-align:center}
 .seg{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:6px}
