@@ -15,7 +15,7 @@ targets:
     info:
       path: Info.plist
       properties:
-        CFBundleDisplayName: جلا
+        CFBundleDisplayName: الديوانية
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         UILaunchScreen:

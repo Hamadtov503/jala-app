@@ -61,5 +61,5 @@ jobs:
         run: |
           gh release delete latest --yes --cleanup-tag || true
           gh release create latest Jala.ipa \
-            --title "جلا — build ${{ github.run_number }}" \
+            --title "الديوانية — build ${{ github.run_number }}" \
             --notes "افتح Jala.ipa من الجوال واختر Open in TrollStore."
