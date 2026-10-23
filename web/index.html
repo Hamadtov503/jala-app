@@ -197,6 +197,9 @@ tr.rank td{background:var(--sunk);border-bottom:0;height:44px}
 .pcard .bar.hot i{background:var(--neg)}
 .rowtools{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .rowtools .btn{height:44px;padding:0 18px}
+.rowtools .btn.addrow{width:58px;height:58px;padding:0;border-radius:16px;display:grid;place-items:center;color:var(--felt);border-color:color-mix(in srgb,var(--felt) 40%,var(--line))}
+.rowtools .btn.addrow.primary{color:var(--felt-ink)}
+.credit{margin-top:8px;text-align:center;font-size:13px;color:var(--muted);letter-spacing:.02em}
 .err{margin:0;color:var(--neg);font-size:13px;text-align:center}
 .seg{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:6px}
 .segb,.segi{height:44px;border:1px solid var(--line);border-radius:10px;background:var(--sunk);color:var(--ink);font:inherit;font-weight:600;text-align:center;min-width:0}
@@ -281,7 +284,7 @@ thead th.turn{background:var(--felt);color:var(--felt-ink);font-weight:700}
 
   <div class="sheetwrap"><table id="grid"></table></div>
   <div class="rowtools" id="rowtools"></div>
-  <p class="hint">اضغط على الخانة واكتب الرقم (موجب أو سالب) ثم انتر. كل 4 جولات دورة كاملة، والأقل مجموع هو الفايز. <span id="saved">كل شي ينحفظ تلقائياً ✓</span></p>
+  <footer class="credit" dir="ltr">Made with love <span aria-hidden="true">❤️</span> Hamad</footer>
 </div>
 
 <div id="layer" hidden></div>
@@ -470,7 +473,7 @@ function refresh(keepLayer){
     ? `<span><b class="tieb">تعادل على المركز الأول</b> · جولة فاصلة لتحديد الفايز</span>`
     : over
     ? `<span><b>انتهت القيمة</b> · وصل أحد اللاعبين <span class="num">${G.target}</span></span>`
-    : `<span class="stack"><span>الدورة <b class="num c-cyc">${Math.floor(next/n)+1}</b></span><span>الجولة <b class="num c-rnd">${next+1}</b></span><span>الحد <b class="num c-lim">${G.target}</b></span></span>`;
+    : `<span class="stack"><span>الحد <b class="num c-lim">${G.target}</b></span><span>الدورة <b class="num c-cyc">${Math.floor(next/n)+1}</b></span><span>الجولة <b class="num c-rnd">${next+1}</b></span></span>`;
 
   // announce the winner once, the moment the target is reached
   if(over && !G.announced){ G.announced=true; save(); ui.sheet='win'; keepLayer=false; if(document.activeElement) document.activeElement.blur(); }
@@ -500,7 +503,7 @@ function refresh(keepLayer){
   // add / remove rows
   const last=G.scores[G.scores.length-1];
   $('rowtools').innerHTML = over ? '' :
-    `<button class="btn${cur<0?' primary':''}" data-a="addrow">+ إضافة جولة</button>`+
+    `<button class="btn addrow${cur<0?' primary':''}" data-a="addrow" aria-label="إضافة جولة" title="إضافة جولة"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 10h18"/><path d="M12 13v5M9.5 15.5h5"/></svg></button>`+
     (G.scores.length>n && rowEmpty(last) && rowEmpty(G.scores[G.scores.length-2]) && !tie ? '<button class="btn danger" data-a="delrow">حذف آخر جولة</button>' : '');
 
   if(!keepLayer) renderLayer();
