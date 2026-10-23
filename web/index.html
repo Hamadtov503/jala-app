@@ -59,6 +59,10 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .okmsg{margin:0;color:var(--felt);font-size:13px;text-align:center;font-weight:600}
 .status{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
 .status .stack{display:flex;flex-direction:column;gap:1px;line-height:1.35}
+/* each number its own colour: cycle green, round blue, limit red */
+.status b.c-cyc{color:var(--felt);font-weight:700}
+.status b.c-rnd{color:#1F5FAE;font-weight:700}
+.status b.c-lim{color:var(--neg);font-weight:700}
 .status b{color:var(--ink);font-weight:600}
 .dealer{display:inline-flex;align-items:center;gap:6px;background:var(--felt-soft);color:var(--ink);padding:4px 10px;border-radius:999px;font-size:13px}
 
@@ -466,7 +470,7 @@ function refresh(keepLayer){
     ? `<span><b class="tieb">تعادل على المركز الأول</b> · جولة فاصلة لتحديد الفايز</span>`
     : over
     ? `<span><b>انتهت القيمة</b> · وصل أحد اللاعبين <span class="num">${G.target}</span></span>`
-    : `<span class="stack"><span>الدورة <b class="num">${Math.floor(next/n)+1}</b></span><span>الجولة <b class="num">${next+1}</b></span><span>الحد <span class="num">${G.target}</span></span></span>`;
+    : `<span class="stack"><span>الدورة <b class="num c-cyc">${Math.floor(next/n)+1}</b></span><span>الجولة <b class="num c-rnd">${next+1}</b></span><span>الحد <b class="num c-lim">${G.target}</b></span></span>`;
 
   // announce the winner once, the moment the target is reached
   if(over && !G.announced){ G.announced=true; save(); ui.sheet='win'; keepLayer=false; if(document.activeElement) document.activeElement.blur(); }
