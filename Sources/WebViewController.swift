@@ -3,7 +3,7 @@ import WebKit
 
 /// Hosts the Jala scorecard (web/index.html, bundled with the app) full screen.
 /// Scores are kept by the page in localStorage, which WKWebView persists on the device.
-final class WebViewController: UIViewController, WKNavigationDelegate {
+final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
     private var webView: WKWebView!
 
     override func loadView() {
@@ -27,6 +27,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate {
 
         webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = self
+        webView.uiDelegate = self
         webView.isOpaque = false
         webView.backgroundColor = .jalaMilk
         webView.scrollView.backgroundColor = .jalaMilk
@@ -56,6 +57,16 @@ final class WebViewController: UIViewController, WKNavigationDelegate {
             return
         }
         decisionHandler(.allow)
+    }
+
+    // Microphone for recording names: the system asks once (NSMicrophoneUsageDescription), the page needn't ask again.
+    @available(iOS 15.0, *)
+    func webView(_ webView: WKWebView,
+                 requestMediaCapturePermissionFor origin: WKSecurityOrigin,
+                 initiatedByFrame frame: WKFrameInfo,
+                 type: WKMediaCaptureType,
+                 decisionHandler: @escaping (WKPermissionDecision) -> Void) {
+        decisionHandler(type == .microphone ? .grant : .deny)
     }
 
     // If iOS reclaims the web process while in the background, reload instead of showing a blank screen.

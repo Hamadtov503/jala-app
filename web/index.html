@@ -34,6 +34,15 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .btn.primary{background:var(--felt);color:var(--felt-ink);border-color:var(--felt)}
 .btn.danger{color:var(--neg)}
 
+.vlist{display:flex;flex-direction:column;gap:6px}
+.vrow{display:flex;align-items:center;gap:8px;background:var(--sunk);border-radius:10px;padding:6px 6px 6px 10px}
+.vrow.recording{background:color-mix(in srgb,var(--neg) 12%,var(--sunk))}
+.vrow .vl{font-weight:600;min-width:64px}
+.vrow .vs{flex:1;font-size:12px;color:var(--muted)}
+.vb{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:14px;display:grid;place-items:center;flex:none;padding:0}
+.vb.rec{color:var(--neg);font-size:18px}
+.vrow.recording .vb.rec{background:var(--neg);color:#fff;border-color:var(--neg)}
+.vb.del{color:var(--muted)}
 .strow{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .sharebtn{display:inline-flex;align-items:center;gap:6px;flex:none;height:34px;padding:0 12px;font-size:13px;font-weight:600;color:var(--felt);border-color:color-mix(in srgb,var(--felt) 35%,var(--line))}
 .linkbox{width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--sunk);color:var(--ink);font:inherit;font-size:13px;padding:0 12px;direction:ltr;text-align:left}
@@ -525,8 +534,21 @@ function nextCell(el){
   p++; if(p>=n){p=0;r++;}
   return r<G.scores.length?$(`c-${r}-${p}`):null;
 }
-function closeSheet(){ ui.sheet=null; ui.impErr=false; render(); }
+function closeSheet(){ if(rec) stopRec(); ui.sheet=null; ui.impErr=false; ui.vErr=null; render(); }
 
+function voiceSection(){
+  const row=(key,label)=>{
+    const on=rec&&rec.key===key, has=!!VOICE[key];
+    return `<div class="vrow${on?' recording':''}"><span class="vl">${esc(label)}</span>
+      <span class="vs">${on?'يسجّل… اضغط ■ لما تخلص':has?'✓ مسجّل بصوتك':'صوت الجوال'}</span>
+      ${has&&!on?`<button class="vb" data-a="vplay" data-k="${esc(key)}" aria-label="تشغيل ${esc(label)}">▶</button><button class="vb del" data-a="vdel" data-k="${esc(key)}" aria-label="حذف تسجيل ${esc(label)}">✕</button>`:''}
+      <button class="vb rec" data-a="vrec" data-k="${esc(key)}" aria-label="${on?'إيقاف':'تسجيل'} ${esc(label)}">${on?'■':'●'}</button></div>`;
+  };
+  return `<div class="field"><label>صوتك في الإعلان: سجّل الأسماء والترتيب، والأرقام ينطقها الجوال</label>
+    <div class="vlist">${G.players.map(n=>row(vkName(n),n)).join('')}${G.players.map((_,i)=>row(vkOrd(i),ORD[i]||('رقم '+(i+1)))).join('')}</div>
+    ${ui.vErr==='mic'?'<p class="err">ما قدرت أفتح المايك. اسمح للتطبيق باستخدام المايك، أو سجّل من رابط GitHub أو تطبيق الجوال.</p>':''}
+    ${ui.vErr==='full'?'<p class="err">ما فيه مساحة كافية لحفظ التسجيل.</p>':''}</div>`;
+}
 function renderLayer(){
   const L=$('layer');
   if(!ui.sheet){L.hidden=true;L.innerHTML='';return;}
@@ -586,6 +608,7 @@ function renderLayer(){
           <input id="tcustom" class="segi${custom?' on':''}" inputmode="numeric" placeholder="رقم ثاني" value="${custom?t:''}" aria-label="حد مخصص">
         </div>
       </div>
+      ${isNew?'':voiceSection()}
       ${isNew?'':`<div class="field"><label>عندك رابط قيمة من أحد؟ الصقه هنا</label>
         <div class="prow"><input id="impcode" placeholder="الصق الرابط" dir="ltr" autocomplete="off" aria-label="رابط القيمة"><button class="btn primary" style="height:42px" data-a="pasteimport">فتح</button></div>
         ${ui.impErr?'<p class="err">الرابط ما يحتوي قيمة صحيحة</p>':''}</div>`}
@@ -597,26 +620,94 @@ function renderLayer(){
 
 /* ---------- read the standings aloud: "الأول صالح ١٩٠، الثاني حمد ٢١٠ …" ---------- */
 const ORD=['الأول','الثاني','الثالث','الرابع','الخامس','السادس','السابع','الثامن'];
+function voiceUp(u){
+  u.lang='ar-SA'; u.rate=1.35; u.pitch=0.85;
+  // original voice choice (first Arabic voice), but a male one when the device has it
+  const vs=speechSynthesis.getVoices().filter(v=>/^ar/i.test(v.lang));
+  const MALE=/maged|majed|tarik|tariq|hamed|hamid|naayf|nayef|omar|shakir|fahed|zayd|ماجد|طارق|حامد|نايف/i;
+  const v=vs.find(v=>MALE.test(v.name))||vs[0];
+  if(v) u.voice=v;
+  return u;
+}
+
+/* ---------- your own recordings for names and places (numbers stay with the phone's voice) ---------- */
+const VKEY='jala-voice-v1';
+let VOICE={}; try{ VOICE=JSON.parse(localStorage.getItem(VKEY))||{}; }catch(e){}
+const vkName=n=>'n:'+String(n).trim(), vkOrd=i=>'o:'+i;
+function saveVoice(){ try{ localStorage.setItem(VKEY,JSON.stringify(VOICE)); return true; }catch(e){ return false; } }
+let rec=null;
+async function startRec(key){
+  if(rec){ stopRec(); return; }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder){ ui.vErr='mic'; renderLayer(); return; }
+  let stream;
+  try{ stream=await navigator.mediaDevices.getUserMedia({audio:true}); }catch(e){ ui.vErr='mic'; renderLayer(); return; }
+  const type=['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/aac'].find(t=>MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t));
+  let mr; try{ mr=new MediaRecorder(stream, type?{mimeType:type,audioBitsPerSecond:48000}:undefined); }catch(e){ mr=new MediaRecorder(stream); }
+  const chunks=[];
+  mr.ondataavailable=e=>{ if(e.data && e.data.size) chunks.push(e.data); };
+  mr.onstop=()=>{
+    stream.getTracks().forEach(t=>t.stop());
+    const blob=new Blob(chunks,{type:mr.mimeType||type||'audio/mp4'});
+    const fr=new FileReader();
+    fr.onload=()=>{ VOICE[key]=fr.result; delete clipCache[key]; if(!saveVoice()){ delete VOICE[key]; ui.vErr='full'; } rec=null; renderLayer(); };
+    fr.readAsDataURL(blob);
+  };
+  rec={key,mr,timer:setTimeout(stopRec,4000)};   // a name never needs more than 4 seconds
+  ui.vErr=null; mr.start(); renderLayer();
+}
+function stopRec(){ if(!rec) return; clearTimeout(rec.timer); try{ rec.mr.stop(); }catch(e){ rec=null; renderLayer(); } }
+
+let AC=null; const clipCache={};
+function audioCtx(){ if(!AC){ const C=window.AudioContext||window.webkitAudioContext; if(C) AC=new C(); } if(AC && AC.state==='suspended') AC.resume(); return AC; }
+async function clipBuffer(key){
+  if(clipCache[key]) return clipCache[key];
+  const ac=audioCtx(); if(!ac || !VOICE[key]) return null;
+  const b64=VOICE[key].split(',')[1]; const bin=atob(b64); const arr=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+  const buf=await new Promise((res,rej)=>ac.decodeAudioData(arr.buffer,res,rej));
+  return clipCache[key]=buf;
+}
+function playClip(key,tok){
+  return clipBuffer(key).then(buf=>new Promise(res=>{
+    if(!buf || tok.stop) return res();
+    const s=AC.createBufferSource(); s.buffer=buf; s.connect(AC.destination); s.onended=res; tok.src=s; s.start();
+  })).catch(()=>{});
+}
+function sayText(text,tok){
+  return new Promise(res=>{
+    if(tok.stop) return res();
+    const u=voiceUp(new SpeechSynthesisUtterance(text)); u.onend=u.onerror=()=>res(); speechSynthesis.speak(u);
+  });
+}
+let speaking=null;
+
 function announce(btn){
   const S=window.speechSynthesis; if(!S) return;
-  if(S.speaking){ S.cancel(); btn.classList.remove('on'); return; }
+  if(speaking || S.speaking){ if(speaking){ speaking.stop=true; try{ speaking.src&&speaking.src.stop(); }catch(e){} speaking=null; } S.cancel(); btn.classList.remove('on'); return; }
   if(document.activeElement && document.activeElement.matches && document.activeElement.matches('input.cell')) document.activeElement.blur();
   const {order,rankOf}=standings();
   const say=t=>t<0?'سالب '+Math.abs(t):String(t);
   // players who share a place are read together: "الثالث، فلان و فلان، 100"
   const groups=[];
   order.forEach(o=>{ const g=groups[groups.length-1]; if(g&&g.t===o.t) g.names.push(o.name); else groups.push({rank:rankOf[o.p],t:o.t,names:[o.name]}); });
-  const text=groups.map(g=>`${ORD[g.rank-1]||('رقم '+g.rank)}، ${g.names.join(' و ')}، ${say(g.t)}`).join('. ')+'.';
-  const u=new SpeechSynthesisUtterance(text);
-  u.lang='ar-SA'; u.rate=1.35; u.pitch=0.85;
-  // original voice choice (first Arabic voice), but a male one when the device has it
-  const vs=S.getVoices().filter(v=>/^ar/i.test(v.lang));
-  const MALE=/maged|majed|tarik|tariq|hamed|hamid|naayf|nayef|omar|shakir|fahed|zayd|ماجد|طارق|حامد|نايف/i;
-  const v=vs.find(v=>MALE.test(v.name))||vs[0];
-  if(v) u.voice=v;
-  u.onend=u.onerror=()=>btn.classList.remove('on');
+  // the sequence: a recorded clip where one exists, otherwise the phone's voice
+  const parts=[];
+  const add=(key,text)=>{ if(key && VOICE[key]) parts.push({clip:key}); else { const l=parts[parts.length-1]; if(l && l.text!=null) l.text+=(/\.$/.test(l.text)?' ':'، ')+text; else parts.push({text}); } };
+  groups.forEach(g=>{
+    add(vkOrd(g.rank-1), ORD[g.rank-1]||('رقم '+g.rank));
+    g.names.forEach((nm,i)=>{ if(i) add(null,'و'); add(vkName(nm), nm); });
+    add(null, say(g.t)+'.');
+  });
   btn.classList.add('on');
-  S.cancel(); S.speak(u);
+  S.cancel();
+  if(!parts.some(x=>x.clip)){
+    const u=voiceUp(new SpeechSynthesisUtterance(parts.map(x=>x.text).join('، ')));
+    u.onend=u.onerror=()=>btn.classList.remove('on'); S.speak(u); return;
+  }
+  // unlock sound on iPhone while still inside the tap
+  audioCtx(); try{ S.speak(new SpeechSynthesisUtterance(' ')); }catch(e){}
+  const tok=speaking={stop:false};
+  (async()=>{ for(const x of parts){ if(tok.stop) break; if(x.clip) await playClip(x.clip,tok); else await sayText(x.text,tok); }
+    if(speaking===tok) speaking=null; btn.classList.remove('on'); })();
 }
 try{ speechSynthesis.getVoices(); }catch(e){}
 
@@ -626,6 +717,9 @@ document.addEventListener('click',e=>{
   wake();
   if(t.id==='btnUndo'){ undo(); return; }
   if(t.id==='btnShare'){ shareGame(); return; }
+  if(t.dataset.a==='vrec'){ startRec(t.dataset.k); return; }
+  if(t.dataset.a==='vplay'){ const tok={}; audioCtx(); playClip(t.dataset.k,tok); return; }
+  if(t.dataset.a==='vdel'){ delete VOICE[t.dataset.k]; delete clipCache[t.dataset.k]; saveVoice(); renderLayer(); return; }
   if(t.dataset.a==='copylink'){
     const inp=$('shareurl'); const url=inp?inp.value:shareLink();
     if(inp){ inp.focus(); inp.select(); try{ inp.setSelectionRange(0,url.length); }catch(_){} }

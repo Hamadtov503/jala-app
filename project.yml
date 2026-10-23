@@ -26,6 +26,7 @@ targets:
         UIStatusBarStyle: UIStatusBarStyleDarkContent
         UIViewControllerBasedStatusBarAppearance: false
         ITSAppUsesNonExemptEncryption: false
+        NSMicrophoneUsageDescription: "جلا يحتاج المايك عشان تسجّل الأسماء والترتيب بصوتك للإعلان."
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.hamad.jala
