@@ -696,25 +696,30 @@ async function startRec(key){
 }
 function stopRec(){ if(!rec) return; clearTimeout(rec.timer); try{ rec.mr.stop(); }catch(e){ rec=null; renderLayer(); } }
 
-let AC=null; const clipCache={};
-function audioCtx(){ if(!AC){ const C=window.AudioContext||window.webkitAudioContext; if(C) AC=new C(); } if(AC && AC.state==='suspended') AC.resume(); return AC; }
-async function clipBuffer(key){
-  if(clipCache[key]) return clipCache[key];
-  const ac=audioCtx(); const d=clipData(key); if(!ac || !d) return null;
-  const b64=d.split(',')[1]; const bin=atob(b64); const arr=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
-  const buf=await new Promise((res,rej)=>ac.decodeAudioData(arr.buffer,res,rej));
-  return clipCache[key]=buf;
-}
+/* Clips play through one <audio> element: on iPhone it keeps playing with the silent switch on
+   (Web Audio is muted by it), and once started from a tap it may play the next clips too. */
+let player=null; const clipCache={};
+const SILENT='data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEwAAAAAAAAAAAAEluZm8AAAAPAAAABgAAAwAAYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgICAgICAoKCgoKCgoKCgoKCgoKCgoMDAwMDAwMDAwMDAwMDAwMDA4ODg4ODg4ODg4ODg4ODg4OD/////////////////////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQDwAAAAAAAAAMArPq/AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//NExAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExFMAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKYAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NExKwAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NExKwAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+function getPlayer(){ if(!player){ player=new Audio(); player.preload='auto'; player.setAttribute('playsinline',''); } return player; }
+function soundOn(){ try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(e){} }
+function unlockAudio(){ soundOn(); const p=getPlayer(); try{ p.src=SILENT; const pr=p.play(); if(pr&&pr.catch) pr.catch(()=>{}); }catch(e){} }
 function playClip(key,tok){
-  return clipBuffer(key).then(buf=>new Promise(res=>{
-    if(!buf) return res(false);
+  const d=clipData(key); if(!d) return Promise.resolve(false);
+  return new Promise(res=>{
     if(tok.stop) return res(true);
-    const s=AC.createBufferSource(); s.buffer=buf; s.connect(AC.destination); s.onended=()=>res(true); tok.src=s; s.start();
-  })).catch(()=>false);
+    soundOn();
+    const p=getPlayer(); let done=false, t=null;
+    const fin=v=>{ if(done) return; done=true; clearTimeout(t); p.onended=p.onerror=null; res(v); };
+    p.onended=()=>fin(true); p.onerror=()=>fin(false);
+    t=setTimeout(()=>fin(true),6000);
+    tok.src={stop(){ try{ p.pause(); }catch(e){} fin(true); }};
+    try{ p.src=d; const pr=p.play(); if(pr&&pr.catch) pr.catch(()=>fin(false)); }catch(e){ fin(false); }
+  });
 }
 function sayText(text,tok){
   return new Promise(res=>{
     if(tok.stop) return res();
+    soundOn();
     const u=voiceUp(new SpeechSynthesisUtterance(text)); u.onend=u.onerror=()=>res(); speechSynthesis.speak(u);
   });
 }
@@ -744,7 +749,7 @@ function announce(btn){
     u.onend=u.onerror=()=>btn.classList.remove('on'); S.speak(u); return;
   }
   // unlock sound on iPhone while still inside the tap
-  audioCtx(); try{ S.speak(new SpeechSynthesisUtterance(' ')); }catch(e){}
+  unlockAudio(); try{ S.speak(new SpeechSynthesisUtterance(' ')); }catch(e){}
   const tok=speaking={stop:false};
   (async()=>{ for(const x of parts){ if(tok.stop) break; if(x.clip){ if(!(await playClip(x.clip,tok))) await sayText(x.say,tok); } else await sayText(x.text,tok); }
     if(speaking===tok) speaking=null; btn.classList.remove('on'); })();
@@ -771,7 +776,7 @@ document.addEventListener('click',e=>{
     renderLayer(); return;
   }
   if(t.dataset.a==='vrec'){ startRec(t.dataset.k); return; }
-  if(t.dataset.a==='vplay'){ const tok={}; audioCtx(); playClip(t.dataset.k,tok); return; }
+  if(t.dataset.a==='vplay'){ const tok={}; playClip(t.dataset.k,tok); return; }
   if(t.dataset.a==='vdel'){ delete VOICE[t.dataset.k]; delete clipCache[t.dataset.k]; saveVoice(); renderLayer(); return; }
   if(t.dataset.a==='copylink'){
     const inp=$('shareurl'); const url=inp?inp.value:shareLink();

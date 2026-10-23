@@ -10,6 +10,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .default()
         config.allowsInlineMediaPlayback = true
+        config.mediaTypesRequiringUserActionForPlayback = []   // let the announcement play clip after clip
 
         // Feel like a native app: no pinch/zoom on focus, no long-press text callouts outside inputs.
         let js = """
