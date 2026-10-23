@@ -34,6 +34,12 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .btn.primary{background:var(--felt);color:var(--felt-ink);border-color:var(--felt)}
 .btn.danger{color:var(--neg)}
 
+.strow{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sharebtn{display:inline-flex;align-items:center;gap:6px;flex:none;height:34px;padding:0 12px;font-size:13px;font-weight:600;color:var(--felt);border-color:color-mix(in srgb,var(--felt) 35%,var(--line))}
+.linkbox{width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--sunk);color:var(--ink);font:inherit;font-size:13px;padding:0 12px;direction:ltr;text-align:left}
+.shared{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.shared li{display:flex;justify-content:space-between;padding:8px 12px;border-radius:10px;background:var(--sunk)}
+.okmsg{margin:0;color:var(--felt);font-size:13px;text-align:center;font-weight:600}
 .status{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
 .status b{color:var(--ink);font-weight:600}
 .dealer{display:inline-flex;align-items:center;gap:6px;background:var(--felt-soft);color:var(--ink);padding:4px 10px;border-radius:999px;font-size:13px}
@@ -241,7 +247,8 @@ thead th.turn{background:var(--felt);color:var(--felt-ink);font-weight:700}
     </div>
   </header>
 
-  <div class="status" id="status"></div>
+  <div class="strow"><div class="status" id="status"></div>
+    <button class="btn sharebtn" id="btnShare" aria-label="مشاركة القيمة"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>مشاركة</button></div>
   <div id="winner"></div>
 
   <div class="sheetwrap"><table id="grid"></table></div>
@@ -307,6 +314,40 @@ function undo(){
   lastState=undoStack.pop(); G=JSON.parse(lastState);
   try{ localStorage.setItem(UKEY,JSON.stringify(undoStack)); }catch(e){}
   ui.sheet=null; save(); render(); updUndo();
+}
+/* ---------- share: the whole game travels inside the link ---------- */
+const SHARE_BASE='https://hamadtov503.github.io/Jala/';
+function encodeGame(g){
+  const s=JSON.stringify({v:1,p:g.players,t:g.target,s:g.scores,n:g.pen});
+  const b=btoa(unescape(encodeURIComponent(s)));
+  return b.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodeGame(code){
+  try{
+    let b=code.replace(/-/g,'+').replace(/_/g,'/'); while(b.length%4) b+='=';
+    const o=JSON.parse(decodeURIComponent(escape(atob(b))));
+    if(!o||!Array.isArray(o.p)||!Array.isArray(o.s)||!o.p.length) return null;
+    const n=o.p.length, num=v=>(typeof v==='number'&&isFinite(v))?Math.round(v):null;
+    return { players:o.p.map(x=>String(x).slice(0,16)),
+      target:(o.t>0?Math.round(o.t):500),
+      scores:o.s.filter(Array.isArray).map(r=>Array.from({length:n},(_,i)=>num(r[i]))),
+      pen:Array.from({length:n},(_,i)=>num((o.n||[])[i])) };
+  }catch(e){ return null; }
+}
+function codeFrom(text){ const m=String(text||'').match(/[#&?]g=([A-Za-z0-9_-]+)/); return m?m[1]:(/^[A-Za-z0-9_-]{20,}$/.test(String(text).trim())?String(text).trim():null); }
+function shareLink(){ return SHARE_BASE+'#g='+encodeGame(G); }
+async function shareGame(){
+  if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  const url=shareLink();
+  try{ if(navigator.share){ await navigator.share({title:'جلا',text:'كمّل القيمة من حيث وقفنا 🃏',url}); return; } }
+  catch(e){ if(e && e.name==='AbortError') return; }
+  ui.sheet='share'; ui.copied=false; renderLayer();
+}
+function askImport(g){ ui.incoming=g; ui.sheet='import'; renderLayer(); }
+function doImport(){
+  const g=ui.incoming; if(!g) return;
+  G={players:g.players,target:g.target,scores:g.scores,pen:g.pen};
+  ui.incoming=null; save(); closeSheet(); step();
 }
 function updUndo(){ const b=document.getElementById('btnUndo'); if(b) b.disabled=!undoStack.length; }
 let edit=null; // {r: number|'pen', p: number, buf: string, fresh: bool}
@@ -484,7 +525,7 @@ function nextCell(el){
   p++; if(p>=n){p=0;r++;}
   return r<G.scores.length?$(`c-${r}-${p}`):null;
 }
-function closeSheet(){ ui.sheet=null; render(); }
+function closeSheet(){ ui.sheet=null; ui.impErr=false; render(); }
 
 function renderLayer(){
   const L=$('layer');
@@ -510,6 +551,21 @@ function renderLayer(){
       <div class="row2"><button class="btn" data-a="close">عرض الجدول</button><button class="btn primary" id="btnNew2">قيمة جديدة</button></div>
     </div>`;
     return;
+  } else if(ui.sheet==='share'){
+    inner=`<div class="kp-head"><h2>مشاركة القيمة</h2><button class="btn" data-a="close">تم</button></div>
+      <p class="hint" style="text-align:right">أرسل هذا الرابط، واللي يفتحه يكمّل القيمة من حيث وقفتوا.</p>
+      <input class="linkbox" id="shareurl" readonly value="${esc(shareLink())}" aria-label="رابط القيمة">
+      ${ui.copied?'<p class="okmsg">تم نسخ الرابط ✓</p>':''}
+      <div class="row2"><button class="btn primary" data-a="copylink">نسخ الرابط</button></div>`;
+  } else if(ui.sheet==='import'){
+    const g=ui.incoming, n=g.players.length;
+    const tot=g.players.map((_,p)=>g.scores.reduce((a,r)=>a+(r[p]||0),0)+(g.pen[p]||0));
+    const rounds=g.scores.filter(r=>r.every(v=>v!=null)).length;
+    inner=`<div class="kp-head"><h2>قيمة مشتركة</h2></div>
+      <p style="margin:0">وصلتك قيمة فيها <b class="num">${rounds}</b> جولة، والحد <b class="num">${g.target}</b>:</p>
+      <ul class="shared">${g.players.map((nm,p)=>`<li><span>${esc(nm)}</span><b class="num">${fmt(tot[p])}</b></li>`).join('')}</ul>
+      <div class="confirm"><p>بتنحط مكان القيمة اللي عندك الحين (وتقدر ترجع لها بزر الرجوع).</p>
+      <div class="row2"><button class="btn" data-a="close">لا</button><button class="btn primary" data-a="doimport">كمّل هالقيمة</button></div></div>`;
   } else if(ui.sheet==='clear'){
     inner=`<div class="kp-head"><h2>إفراغ الخانات</h2></div>
       <div class="confirm"><p>بتنمسح كل الأرقام والعقوبات، وتبقى أسماء اللاعبين والحد مثل ما هي.</p>
@@ -530,6 +586,9 @@ function renderLayer(){
           <input id="tcustom" class="segi${custom?' on':''}" inputmode="numeric" placeholder="رقم ثاني" value="${custom?t:''}" aria-label="حد مخصص">
         </div>
       </div>
+      ${isNew?'':`<div class="field"><label>عندك رابط قيمة من أحد؟ الصقه هنا</label>
+        <div class="prow"><input id="impcode" placeholder="الصق الرابط" dir="ltr" autocomplete="off" aria-label="رابط القيمة"><button class="btn primary" style="height:42px" data-a="pasteimport">فتح</button></div>
+        ${ui.impErr?'<p class="err">الرابط ما يحتوي قيمة صحيحة</p>':''}</div>`}
       ${isNew?`<div class="confirm"><p>بتنمسح كل النقاط الحالية وتبدأ قيمة جديدة.</p>
       <div class="row2"><button class="btn" data-a="close">رجوع</button><button class="btn primary" data-a="donew">ابدأ القيمة</button></div></div>`:''}`;
   }
@@ -566,6 +625,21 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('button,[data-a]'); if(!t) return;
   wake();
   if(t.id==='btnUndo'){ undo(); return; }
+  if(t.id==='btnShare'){ shareGame(); return; }
+  if(t.dataset.a==='copylink'){
+    const inp=$('shareurl'); const url=inp?inp.value:shareLink();
+    if(inp){ inp.focus(); inp.select(); try{ inp.setSelectionRange(0,url.length); }catch(_){} }
+    try{ document.execCommand('copy'); }catch(_){}
+    try{ navigator.clipboard && navigator.clipboard.writeText(url).catch(()=>{}); }catch(_){}
+    ui.copied=true; renderLayer();
+    return;
+  }
+  if(t.dataset.a==='doimport'){ doImport(); return; }
+  if(t.dataset.a==='pasteimport'){
+    const c=codeFrom(($('impcode')||{}).value), g=c&&decodeGame(c);
+    if(g){ ui.impErr=false; askImport(g); } else { ui.impErr=true; renderLayer(); }
+    return;
+  }
   if(t.id==='btnSpeak'){ announce(t); return; }
   if(t.id==='btnSettings'){ ui.sheet='settings'; renderLayer(); return; }
   if(t.id==='btnClear'){ if(document.activeElement) document.activeElement.blur(); ui.sheet='clear'; renderLayer(); return; }
@@ -636,6 +710,14 @@ window.addEventListener('pagehide',()=>save());
 
 render();
 lastState=JSON.stringify(G); updUndo();
+function checkHash(){
+  const c=codeFrom(location.hash); if(!c) return;
+  const g=decodeGame(c);
+  try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
+  if(g) askImport(g);
+}
+checkHash();
+addEventListener('hashchange',checkHash);
 
 /* splash: hold ~2.6s (tap to skip), then fade into the scorecard */
 const sp=$('splash');
