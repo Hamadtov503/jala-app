@@ -172,7 +172,11 @@ tr.pen input.cell:focus{outline-color:var(--pen-ink);background:color-mix(in srg
 table{table-layout:fixed;min-width:0;width:100%}
 th.rcol,td.rcol{width:62px;padding:6px 8px}
 thead th{max-width:none;padding:10px 2px}
-.cell,input.cell{width:100%;min-width:0;height:40px}
+.cell,input.cell{width:100%;min-width:0;height:36px}
+.app{gap:12px}
+tbody tr[id^="row-"] td.rcol{padding-block:4px}
+tr.rank td{height:40px}
+.rk{width:28px;height:28px}
 .sheetwrap{overflow-x:hidden}
 
 .board{grid-template-columns:repeat(4,1fr)}
@@ -329,7 +333,8 @@ function isOver(){
   return reached() && !topTied();
 }
 function normalize(){
-  while(G.scores.length<G.players.length) G.scores.push(G.players.map(()=>null));
+  // start with two full cycles (8 rounds for 4 players)
+  while(G.scores.length<G.players.length*2) G.scores.push(G.players.map(()=>null));
 }
 function addRow(){ G.scores.push(G.players.map(()=>null)); save(); }
 
@@ -452,7 +457,15 @@ function fitNames(){
     while(el.scrollWidth>el.clientWidth+1 && fs>9){ fs-=0.5; el.style.fontSize=fs+'px'; }
   });
 }
-addEventListener('resize',()=>fitNames());
+addEventListener('resize',()=>{ fitNames(); fitScreen(); });
+// make the page exactly one visible screen tall (measured, not guessed) so the credit sits at the bottom without scrolling
+function fitScreen(){
+  const app=document.getElementById('app'); if(!app) return;
+  const cs=getComputedStyle(document.documentElement);
+  const h=(window.visualViewport?visualViewport.height:innerHeight)-parseFloat(cs.paddingTop||0)-parseFloat(cs.paddingBottom||0);
+  if(h>200) app.style.minHeight=Math.floor(h)+'px';
+}
+if(window.visualViewport) visualViewport.addEventListener('resize',fitScreen);
 
 // Light update after a score changes; leaves the inputs (and keyboard focus) alone.
 function refresh(keepLayer){
@@ -509,7 +522,7 @@ function refresh(keepLayer){
   const last=G.scores[G.scores.length-1];
   $('rowtools').innerHTML = over ? '' :
     `<button class="btn addrow${cur<0?' primary':''}" data-a="addrow" aria-label="إضافة جولة" title="إضافة جولة"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>`+
-    (G.scores.length>n && rowEmpty(last) && rowEmpty(G.scores[G.scores.length-2]) && !tie ? '<button class="btn addrow delrow" data-a="delrow" aria-label="حذف آخر جولة" title="حذف آخر جولة"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="7" width="13" height="10" rx="2"/><path d="M2.5 12h13"/><path d="M18 9.5l4 4M22 9.5l-4 4" stroke-width="2.4"/></svg></button>' : '');
+    (G.scores.length>n*2 && rowEmpty(last) && rowEmpty(G.scores[G.scores.length-2]) && !tie ? '<button class="btn addrow delrow" data-a="delrow" aria-label="حذف آخر جولة" title="حذف آخر جولة"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="7" width="13" height="10" rx="2"/><path d="M2.5 12h13"/><path d="M18 9.5l4 4M22 9.5l-4 4" stroke-width="2.4"/></svg></button>' : '');
 
   if(!keepLayer) renderLayer();
 }
@@ -878,6 +891,7 @@ document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==
 window.addEventListener('pagehide',()=>save());
 
 render();
+fitScreen(); setTimeout(fitScreen,300); setTimeout(fitScreen,1500);
 lastState=JSON.stringify(G); updUndo();
 function checkHash(){
   const c=codeFrom(location.hash); if(!c) return;
