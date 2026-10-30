@@ -66,8 +66,38 @@ button.brand{background:none;border:0;padding:0;display:flex;flex-direction:colu
 .gart i{position:absolute;top:4px;width:38px;height:54px;border-radius:7px;background:#fff;border:1.5px solid var(--line);display:grid;place-items:center;font-style:normal;font-weight:700;font-family:Georgia,serif;font-size:20px;color:#1E211C;box-shadow:0 4px 10px rgba(80,60,30,.12)}
 .gart i:first-child{right:4px;transform:rotate(8deg)}
 .gart i.r{right:26px;transform:rotate(-8deg);color:#C0262D}
-.gart.tiles i{width:36px;height:50px;border-radius:6px;background:#FFFDF6;border-color:#D9CDB4;font-family:var(--body);font-size:22px;color:#16284A}
-.gart.tiles i.r{color:#C0262D}
+/* real playing cards for Jala: corner index + suit */
+.gart.cards i{font-family:Georgia,"Times New Roman",serif}
+.gart.cards i b{font-size:24px;font-weight:400;line-height:1}
+.gart.cards i em{position:absolute;top:3px;left:5px;font-style:normal;font-weight:700;font-size:10px;line-height:1}
+.gart.cards i em.br{top:auto;left:auto;bottom:3px;right:5px;transform:rotate(180deg)}
+.gart.cards i:first-child{color:#16201B}
+/* chooser: two tall columns side by side */
+.chooser{flex-direction:row;align-items:center;justify-content:center;gap:14px;padding-left:16px;padding-right:16px}
+.gcard{flex:1;min-width:0;flex-direction:column;justify-content:center;gap:26px;height:min(68vh,520px);padding:22px 12px;text-align:center;border-radius:26px}
+.gcard .gtxt{flex:none;align-items:center;gap:8px}
+.gcard .gtxt b{font-size:40px}
+.gcard .gtxt small{font-size:13px;line-height:1.5;padding:0 4px}
+.gcard .gart{width:70px;height:64px;transform:scale(1.9);transform-origin:center;margin:30px 0}
+/* opening screen: two Okey tiles fanned with the two cards */
+.pc.tile{background:linear-gradient(#FFFDF4,#EFE7D2);border-radius:11px;place-items:start center;padding-top:16px;color:#1A1A1A;box-shadow:0 5px 0 #D6CBB2,0 14px 26px rgba(80,60,30,.22),0 0 0 1px rgba(80,60,30,.14)}
+.pc.tile span{font-family:"Arial Black","Helvetica Neue",Arial,sans-serif;font-weight:900;font-size:44px;line-height:1}
+.pc.tile::after{content:"";position:absolute;left:50%;bottom:24px;width:13px;height:13px;margin-left:-6.5px;border-radius:50%;background:currentColor;opacity:.85}
+.pc.tile.red{color:#C8262A}
+.pc.tile.blue{color:#1F5FAE}
+/* opening screen: Okey tiles in front of the cards */
+.otiles{display:flex;gap:4px;margin-top:-118px;margin-bottom:14px;position:relative;z-index:2;opacity:0;transform:translateY(16px);animation:rise .6s ease-out .85s forwards}
+.otiles i:nth-child(1){transform:rotate(-9deg) translateY(10px)}
+.otiles i:nth-child(3){transform:rotate(9deg) translateY(10px)}
+.otiles i{position:relative;width:62px;height:86px;border-radius:9px;background:linear-gradient(#FFFDF4,#F1EAD6);border:1.5px solid #D9CDB4;display:grid;place-items:start center;padding-top:10px;font-style:normal;font-family:"Arial Black",var(--body);font-weight:900;font-size:30px;color:#1A1A1A;box-shadow:0 4px 0 #D6CBB2,0 12px 22px rgba(80,60,30,.25)}
+.otiles i::after{content:"";position:absolute;left:50%;bottom:13px;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:currentColor;opacity:.85}
+.otiles i.r{color:#C8262A}
+.otiles i.b{color:#1F5FAE}
+@media (prefers-reduced-motion:reduce){.otiles{animation:none;opacity:1;transform:none}}
+/* Okey tiles: cream, a bold number with the small dot underneath */
+.gart.tiles i{width:36px;height:50px;border-radius:5px;background:linear-gradient(#FFFDF4,#F1EAD6);border-color:#D9CDB4;font-family:"Arial Black",var(--body);font-weight:900;font-size:21px;color:#1A1A1A;place-items:start center;padding-top:6px;box-shadow:0 3px 0 #D6CBB2,0 6px 12px rgba(80,60,30,.15)}
+.gart.tiles i::after{content:"";position:absolute;left:50%;bottom:8px;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:currentColor;opacity:.85}
+.gart.tiles i.r{color:#C8262A}
 .strow{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-top:-6px}
 .sharebtn{display:inline-flex;align-items:center;gap:6px;flex:none;height:34px;padding:0 12px;font-size:13px;font-weight:600;color:var(--felt);border-color:color-mix(in srgb,var(--felt) 35%,var(--line))}
 .linkbox{width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--sunk);color:var(--ink);font:inherit;font-size:13px;padding:0 12px;direction:ltr;text-align:left}
@@ -281,8 +311,8 @@ thead th.turn{background:var(--felt);color:var(--felt-ink);font-weight:700}
 
 <div id="splash" aria-label="الديوانية">
   <div class="deck">
-    <div class="pc s1"><i>A</i><b>♠</b><i class="br">A</i></div>
-    <div class="pc s2 red"><i>A</i><b>♥</b><i class="br">A</i></div>
+    <div class="pc s1 tile red"><span>12</span></div>
+    <div class="pc s2 tile blue"><span>12</span></div>
     <div class="pc s3"><i>A</i><b>♣</b><i class="br">A</i></div>
     <div class="pc s4 red"><i>A</i><b>♦</b><i class="br">A</i></div>
   </div>
@@ -319,7 +349,7 @@ thead th.turn{background:var(--felt);color:var(--felt-ink);font-weight:700}
 (function(){
 const GAMES={
   jala:{name:'جلا', key:'jala-game-v2',      ukey:'jala-undo-v1',      crown:'ملك الجلا', desc:'دورتين وأكثر لين أحد يوصل الحد'},
-  okey:{name:'Okey', key:'jala-game-okey-v1', ukey:'jala-undo-okey-v1', crown:'الفايز',    desc:'دورة وحدة، والأقل مجموع يفوز'}
+  okey:{name:'Okey', key:'jala-game-okey-v1', ukey:'jala-undo-okey-v1', crown:'الفايز',    desc:'4 جولات، والأقل مجموع يفوز'}
 };
 let MODE='jala'; try{ MODE=localStorage.getItem('jala-mode')||'jala'; }catch(e){}
 if(!GAMES[MODE]) MODE='jala';
@@ -637,11 +667,10 @@ function renderLayer(){
   L.hidden=false;
   let inner='';
   if(ui.sheet==='game'){
-    const card=(m,art)=>`<button class="gcard${m===MODE?' cur':''}" data-a="pickgame" data-g="${m}">${art}<span class="gtxt"><b>${GAMES[m].name}</b><small>${GAMES[m].desc}</small></span></button>`;
+    const card=(m,art)=>`<button class="gcard${m==='jala'?' cur':''}" data-a="pickgame" data-g="${m}">${art}<span class="gtxt"><b>${GAMES[m].name}</b></span></button>`;
     L.innerHTML=`<div class="chooser" role="dialog" aria-modal="true" aria-label="اختر اللعبة">
-      <h2 class="ctitle">الديوانية</h2><p class="csub">وش بتلعبون اليوم؟</p>
-      ${card('jala','<span class="gart cards"><i>A</i><i class="r">A</i></span>')}
-      ${card('okey','<span class="gart tiles"><i>7</i><i class="r">7</i></span>')}
+      ${card('jala','<span class="gart cards"><i><em>A</em><b>♠</b><em class="br">A</em></i><i class="r"><em>A</em><b>♥</b><em class="br">A</em></i></span>')}
+      ${card('okey','<span class="gart tiles"><i>12</i><i class="r">12</i></span>')}
     </div>`;
     return;
   }
