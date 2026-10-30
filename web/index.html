@@ -51,6 +51,23 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 /* bottom row matches the top row exactly so the icons stack in columns */
 .tools,.tools.sm{gap:8px;flex:none}
 .tools.sm .btn.icon{width:42px;height:42px}
+button.brand{background:none;border:0;padding:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:right;color:inherit}
+.gname{font-size:12px;font-weight:700;color:var(--gold);background:var(--gold-soft);border-radius:999px;padding:2px 10px}
+.gname::after{content:" ▾";font-size:10px}
+.chooser{position:fixed;inset:0;z-index:20;background:radial-gradient(120% 90% at 50% 30%,#FFFCF5 0%,var(--bg) 60%,#ECE3D2 100%);display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:14px;padding:calc(24px + env(safe-area-inset-top,0px)) 20px calc(24px + env(safe-area-inset-bottom,0px));max-width:520px;margin:0 auto}
+.ctitle{text-align:center;font-family:var(--display);font-size:44px;color:var(--felt);margin:0}
+.csub{text-align:center;margin:0 0 10px;color:var(--muted)}
+.gcard{display:flex;align-items:center;gap:16px;background:var(--surface);border:1.5px solid var(--line);border-radius:22px;padding:18px;text-align:right;box-shadow:0 8px 20px rgba(80,60,30,.08)}
+.gcard.cur{border-color:var(--felt)}
+.gtxt{display:flex;flex-direction:column;gap:4px;flex:1}
+.gtxt b{font-family:var(--display);font-size:30px;color:var(--ink);line-height:1.1}
+.gtxt small{font-size:13px;color:var(--muted)}
+.gart{position:relative;width:70px;height:64px;flex:none}
+.gart i{position:absolute;top:4px;width:38px;height:54px;border-radius:7px;background:#fff;border:1.5px solid var(--line);display:grid;place-items:center;font-style:normal;font-weight:700;font-family:Georgia,serif;font-size:20px;color:#1E211C;box-shadow:0 4px 10px rgba(80,60,30,.12)}
+.gart i:first-child{right:4px;transform:rotate(8deg)}
+.gart i.r{right:26px;transform:rotate(-8deg);color:#C0262D}
+.gart.tiles i{width:36px;height:50px;border-radius:6px;background:#FFFDF6;border-color:#D9CDB4;font-family:var(--body);font-size:22px;color:#16284A}
+.gart.tiles i.r{color:#C0262D}
 .strow{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-top:-6px}
 .sharebtn{display:inline-flex;align-items:center;gap:6px;flex:none;height:34px;padding:0 12px;font-size:13px;font-weight:600;color:var(--felt);border-color:color-mix(in srgb,var(--felt) 35%,var(--line))}
 .linkbox{width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--sunk);color:var(--ink);font:inherit;font-size:13px;padding:0 12px;direction:ltr;text-align:left}
@@ -275,7 +292,7 @@ thead th.turn{background:var(--felt);color:var(--felt-ink);font-weight:700}
 
 <div class="app" id="app">
   <header>
-    <div class="brand"><h1>الديوانية</h1></div>
+    <button class="brand" id="btnGame" aria-label="تغيير اللعبة"><h1>الديوانية</h1><span class="gname" id="gname"></span></button>
     <div class="tools">
       <button class="btn icon danger" id="btnClear" aria-label="إفراغ الخانات" title="إفراغ الخانات"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
       <button class="btn icon" id="btnSettings" aria-label="الإعدادات" title="الإعدادات"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
@@ -300,7 +317,14 @@ thead th.turn{background:var(--felt);color:var(--felt-ink);font-weight:700}
 
 <script>
 (function(){
-const KEY='jala-game-v2';
+const GAMES={
+  jala:{name:'جلا', key:'jala-game-v2',      ukey:'jala-undo-v1',      crown:'ملك الجلا', desc:'دورتين وأكثر لين أحد يوصل الحد'},
+  okey:{name:'Okey', key:'jala-game-okey-v1', ukey:'jala-undo-okey-v1', crown:'الفايز',    desc:'دورة وحدة، والأقل مجموع يفوز'}
+};
+let MODE='jala'; try{ MODE=localStorage.getItem('jala-mode')||'jala'; }catch(e){}
+if(!GAMES[MODE]) MODE='jala';
+let KEY=GAMES[MODE].key, UKEY=GAMES[MODE].ukey;
+const isOkey=()=>MODE==='okey';
 const ROSTER=['بو بداح','حمد','صالح','عمر','حميدي','عبدالعزيز','عبدالمجيد','سالم','محمد','سعد','بو سلمان','علي'];
 const QUICK=[-40,-20,0,10,20,30,40,50,60,70,80,90,100,110,120,130];
 
@@ -325,6 +349,7 @@ const rowEmpty=r=>r.every(v=>v==null);
 function reached(){
   const any=G.scores.some(rowFull);
   const noHalf=G.scores.every(r=>rowFull(r)||rowEmpty(r));
+  if(isOkey()) return any && noHalf && G.scores.filter(rowFull).length>=G.players.length;
   return any && noHalf && Math.max(...totals())>=G.target;
 }
 // two or more players level on the lowest total
@@ -334,12 +359,12 @@ function isOver(){
 }
 function normalize(){
   // start with two full cycles (8 rounds for 4 players)
-  while(G.scores.length<G.players.length*2) G.scores.push(G.players.map(()=>null));
+  while(G.scores.length<G.players.length*(isOkey()?1:2)) G.scores.push(G.players.map(()=>null));
 }
 function addRow(){ G.scores.push(G.players.map(()=>null)); save(); }
 
 let G=load();
-const UKEY='jala-undo-v1', UMAX=4;
+const UMAX=4;
 let undoStack=[]; try{ undoStack=JSON.parse(localStorage.getItem(UKEY))||[]; }catch(e){}
 let lastState=JSON.stringify(G);
 // call after any finished change: the state before it becomes one undo step
@@ -360,7 +385,7 @@ function undo(){
 /* ---------- share: the whole game travels inside the link ---------- */
 const SHARE_BASE='https://hamadtov503.github.io/Jala/';
 function encodeGame(g){
-  const s=JSON.stringify({v:1,p:g.players,t:g.target,s:g.scores,n:g.pen});
+  const s=JSON.stringify({v:1,m:MODE,p:g.players,t:g.target,s:g.scores,n:g.pen});
   const b=btoa(unescape(encodeURIComponent(s)));
   return b.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
@@ -370,7 +395,7 @@ function decodeGame(code){
     const o=JSON.parse(decodeURIComponent(escape(atob(b))));
     if(!o||!Array.isArray(o.p)||!Array.isArray(o.s)||!o.p.length) return null;
     const n=o.p.length, num=v=>(typeof v==='number'&&isFinite(v))?Math.round(v):null;
-    return { players:o.p.map(x=>String(x).slice(0,16)),
+    return { mode:(o.m==='okey'?'okey':'jala'), players:o.p.map(x=>String(x).slice(0,16)),
       target:(o.t>0?Math.round(o.t):500),
       scores:o.s.filter(Array.isArray).map(r=>Array.from({length:n},(_,i)=>num(r[i]))),
       pen:Array.from({length:n},(_,i)=>num((o.n||[])[i])) };
@@ -388,8 +413,21 @@ async function shareGame(){
 function askImport(g){ ui.incoming=g; ui.sheet='import'; renderLayer(); }
 function doImport(){
   const g=ui.incoming; if(!g) return;
+  if(g.mode && g.mode!==MODE) switchGame(g.mode);
   G={players:g.players,target:g.target,scores:g.scores,pen:g.pen};
   ui.incoming=null; save(); closeSheet(); step();
+}
+function switchGame(m){
+  if(!GAMES[m]) return;
+  if(m!==MODE){
+    save();
+    MODE=m; KEY=GAMES[m].key; UKEY=GAMES[m].ukey;
+    try{ localStorage.setItem('jala-mode',m); }catch(e){}
+    G=load();
+    undoStack=[]; try{ undoStack=JSON.parse(localStorage.getItem(UKEY))||[]; }catch(e){}
+  }
+  lastState=JSON.stringify(G);
+  ui.sheet=null; render(); updUndo(); fitScreen();
 }
 function updUndo(){ const b=document.getElementById('btnUndo'); if(b) b.disabled=!undoStack.length; }
 let edit=null; // {r: number|'pen', p: number, buf: string, fresh: bool}
@@ -477,7 +515,7 @@ function refresh(keepLayer){
   // target reached but first place is shared: add a deciding round straight away
   const tie=reached() && topTied();
   // every round filled and the game isn't over (limit not reached, or a tie for first): open the next round
-  if(!over && rowFull(G.scores[G.scores.length-1])){
+  if(!over && rowFull(G.scores[G.scores.length-1]) && (!isOkey() || tie)){
     addRow(); render(keepLayer);
     // if a cell was just tapped while the grid rebuilt, put the cursor back in it
     const t=tapped; tapped=null;
@@ -490,7 +528,9 @@ function refresh(keepLayer){
   $('status').innerHTML = tie
     ? `<span><b class="tieb">تعادل على المركز الأول</b> · جولة فاصلة لتحديد الفايز</span>`
     : over
-    ? `<span><b>انتهت القيمة</b> · وصل أحد اللاعبين <span class="num">${G.target}</span></span>`
+    ? (isOkey() ? `<span><b>انتهت الدورة</b></span>` : `<span><b>انتهت القيمة</b> · وصل أحد اللاعبين <span class="num">${G.target}</span></span>`)
+    : isOkey()
+    ? `<span class="stack"><span>الجولة <b class="num c-rnd">${Math.min(next,n-1)+1}</b> من <b class="num">${n}</b></span></span>`
     : `<span class="stack"><span>الحد <b class="num c-lim">${G.target}</b></span><span>الدورة <b class="num c-cyc">${Math.floor(next/n)+1}</b></span><span>الجولة <b class="num c-rnd">${next+1}</b></span></span>`;
 
   // announce the winner once, the moment the target is reached
@@ -500,9 +540,10 @@ function refresh(keepLayer){
   // winner
   if(over){
     const winners=order.filter(o=>o.t===best).map(o=>esc(o.name)).join(' و ');
-    $('winner').innerHTML=`<div class="winner">ملك الجلا <strong>${winners}</strong> بمجموع <span class="num">${fmt(best)}</span></div>`;
+    $('winner').innerHTML=`<div class="winner">${GAMES[MODE].crown} <strong>${winners}</strong> بمجموع <span class="num">${fmt(best)}</span></div>`;
   } else $('winner').innerHTML='';
 
+  { const gn=$('gname'); if(gn) gn.textContent=GAMES[MODE].name; }
   // whose turn it is: their name in the table header turns green
   const dealerIdx=over?-1:next%n;
   for(let p=0;p<n;p++){ const th=$('h-'+p); if(th){ const was=th.classList.contains('turn'); th.classList.toggle('turn', p===dealerIdx); th.innerHTML=esc(G.players[p])+(p===dealerIdx?'<span class="joker" role="img" aria-label="الموزّع" title="الموزّع">🃏</span>':''); if(was!==(p===dealerIdx)) requestAnimationFrame(fitNames); } }
@@ -520,7 +561,7 @@ function refresh(keepLayer){
 
   // add / remove rows
   const last=G.scores[G.scores.length-1];
-  $('rowtools').innerHTML = over ? '' :
+  $('rowtools').innerHTML = (over || isOkey()) ? '' :
     `<button class="btn addrow${cur<0?' primary':''}" data-a="addrow" aria-label="إضافة جولة" title="إضافة جولة"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>`+
     (G.scores.length>n*2 && rowEmpty(last) && rowEmpty(G.scores[G.scores.length-2]) && !tie ? '<button class="btn addrow delrow" data-a="delrow" aria-label="حذف آخر جولة" title="حذف آخر جولة"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="7" width="13" height="10" rx="2"/><path d="M2.5 12h13"/><path d="M18 9.5l4 4M22 9.5l-4 4" stroke-width="2.4"/></svg></button>' : '');
 
@@ -552,11 +593,11 @@ function commitInput(el){
   let filled=false;
   const put=(q,v)=>{ G.scores[r][q]=v; const c=$(`c-${r}-${q}`); if(c){ c.value=String(v); c.classList.toggle('neg',v<0); c.classList.remove('bad'); } };
   const BONUS={'-40':100,'-80':200};
-  if(r!=='pen' && BONUS[res.v]!==undefined && el.dataset.f!==String(res.v)){
+  if(!isOkey() && r!=='pen' && BONUS[res.v]!==undefined && el.dataset.f!==String(res.v)){
     el.dataset.f=String(res.v);
     G.players.forEach((_,q)=>{ if(q!==p) put(q,BONUS[res.v]); });
     save(); filled=true;
-  } else if(r!=='pen' && res.v!=null){
+  } else if(!isOkey() && r!=='pen' && res.v!=null){
     const row=G.scores[r], empty=row.map((v,q)=>v==null?q:-1).filter(q=>q>=0);
     // the reverse of the bonus rule: all others 100 → −40, all others 200 → −80, otherwise −20
     if(empty.length===1 && row.every(v=>v==null||v>=0)){
@@ -595,6 +636,15 @@ function renderLayer(){
   if(!ui.sheet){L.hidden=true;L.innerHTML='';return;}
   L.hidden=false;
   let inner='';
+  if(ui.sheet==='game'){
+    const card=(m,art)=>`<button class="gcard${m===MODE?' cur':''}" data-a="pickgame" data-g="${m}">${art}<span class="gtxt"><b>${GAMES[m].name}</b><small>${GAMES[m].desc}</small></span></button>`;
+    L.innerHTML=`<div class="chooser" role="dialog" aria-modal="true" aria-label="اختر اللعبة">
+      <h2 class="ctitle">الديوانية</h2><p class="csub">وش بتلعبون اليوم؟</p>
+      ${card('jala','<span class="gart cards"><i>A</i><i class="r">A</i></span>')}
+      ${card('okey','<span class="gart tiles"><i>7</i><i class="r">7</i></span>')}
+    </div>`;
+    return;
+  }
   if(ui.sheet==='win'){
     const tot=totals();
     const order=G.players.map((name,p)=>({name,t:tot[p]})).sort((a,b)=>a.t-b.t);
@@ -607,9 +657,9 @@ function renderLayer(){
         <div class="kc r"><i>J</i><b>♣</b></div>
         <div class="kc k"><i>K</i><b>♠</b><i class="br">K</i></div>
       </div>
-      <p class="mlabel">ملك الجلا</p>
+      <p class="mlabel">${GAMES[MODE].crown}</p>
       <h2 id="wt">${winners}</h2>
-      <p class="mnote">${esc(loser.name)} وصل <span class="num">${loser.t}</span> وتعدّى الحد <span class="num">${G.target}</span></p>
+      <p class="mnote">${isOkey()?'انتهت الدورة، والأقل مجموع هو الفايز':`${esc(loser.name)} وصل <span class="num">${loser.t}</span> وتعدّى الحد <span class="num">${G.target}</span>`}</p>
       <ol class="final">${order.map(o=>`<li${o.t===best?' class="w"':''}><span>${esc(o.name)}</span><b class="num">${fmt(o.t)}</b></li>`).join('')}</ol>
       <div class="row2"><button class="btn" data-a="close">عرض الجدول</button><button class="btn primary" id="btnNew2">قيمة جديدة</button></div>
     </div>`;
@@ -625,7 +675,7 @@ function renderLayer(){
     const tot=g.players.map((_,p)=>g.scores.reduce((a,r)=>a+(r[p]||0),0)+(g.pen[p]||0));
     const rounds=g.scores.filter(r=>r.every(v=>v!=null)).length;
     inner=`<div class="kp-head"><h2>قيمة مشتركة</h2></div>
-      <p style="margin:0">وصلتك قيمة فيها <b class="num">${rounds}</b> جولة، والحد <b class="num">${g.target}</b>:</p>
+      <p style="margin:0">وصلتك قيمة <b>${GAMES[g.mode||'jala'].name}</b> فيها <b class="num">${rounds}</b> جولة${(g.mode||'jala')==='jala'?`، والحد <b class="num">${g.target}</b>`:''}:</p>
       <ul class="shared">${g.players.map((nm,p)=>`<li><span>${esc(nm)}</span><b class="num">${fmt(tot[p])}</b></li>`).join('')}</ul>
       <div class="confirm"><p>بتنحط مكان القيمة اللي عندك الحين (وتقدر ترجع لها بزر الرجوع).</p>
       <div class="row2"><button class="btn" data-a="close">لا</button><button class="btn primary" data-a="doimport">كمّل هالقيمة</button></div></div>`;
@@ -644,13 +694,13 @@ function renderLayer(){
         <div class="chips2">${ROSTER.map(nm=>`<button class="chip2${names.includes(nm)?' used':''}" data-a="pick" data-n="${esc(nm)}">${esc(nm)}</button>`).join('')}</div>
         <p class="hint" style="text-align:right">لاعب من برّا؟ اكتب اسمه في الخانة على طول.</p>
       </div>
-      <div class="field"><label>حد اللعبة (أول واحد يوصله تنتهي القيمة)</label>
+      ${isOkey()?'':`<div class="field"><label>حد اللعبة (أول واحد يوصله تنتهي القيمة)</label>
         <div class="seg">
           <button class="segb${t===500?' on':''}" data-t="500">500</button>
           <button class="segb${t===1000?' on':''}" data-t="1000">1000</button>
           <input id="tcustom" class="segi${custom?' on':''}" inputmode="numeric" placeholder="رقم ثاني" value="${custom?t:''}" aria-label="حد مخصص">
         </div>
-      </div>
+      </div>`}
       ${isNew?'':voiceSection()}
       ${isNew?'':`<div class="field"><label>عندك رابط قيمة من أحد؟ الصقه هنا</label>
         <div class="prow"><input id="impcode" placeholder="الصق الرابط" dir="ltr" autocomplete="off" aria-label="رابط القيمة"><button class="btn primary" style="height:42px" data-a="pasteimport">فتح</button></div>
@@ -788,6 +838,8 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('button,[data-a]'); if(!t) return;
   wake();
   if(t.id==='btnUndo'){ undo(); return; }
+  if(t.id==='btnGame'){ if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); ui.sheet='game'; renderLayer(); return; }
+  if(t.dataset.a==='pickgame'){ switchGame(t.dataset.g); return; }
   if(t.id==='btnShare'){ shareGame(); return; }
   if(t.dataset.a==='pick' || t.dataset.a==='seatclear'){
     const isNew=ui.sheet==='new', names=isNew?ui.draft.players:G.players;
@@ -899,6 +951,7 @@ function checkHash(){
   try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
   if(g) askImport(g);
 }
+if(!codeFrom(location.hash) && ui.sheet!=='win'){ ui.sheet='game'; renderLayer(); }
 checkHash();
 addEventListener('hashchange',checkHash);
 
