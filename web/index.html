@@ -294,7 +294,12 @@ input.cell{direction:ltr;unicode-bidi:plaintext}
 #grid tr.pen td:not(:last-child){border-left-color:color-mix(in srgb,var(--pen-ink) 22%,transparent)}
 #grid tr.sum td:not(:last-child){border-left-color:color-mix(in srgb,var(--navy-ink) 22%,transparent)}
 /* joker card beside the dealer's name in the header */
-.joker{font-size:16px;line-height:1;margin-inline-start:3px;vertical-align:-2px;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+/* Okey: the 4th round is light orange instead of light red */
+body.m-okey tbody tr.cyc[id^="row-"] td:not(.rcol){background:#FFE7C9;border-bottom-color:#F5CF9C}
+/* Okey: a tiny cream tile instead of the joker card */
+.mtile{position:relative;display:inline-grid;place-items:start center;width:15px;height:20px;margin-inline-start:4px;vertical-align:middle;margin-top:-3px;border-radius:3px;background:linear-gradient(#FFFDF4,#EDE4CC);border:1px solid #CFC2A6;box-shadow:0 1.5px 0 #CFC2A6;color:#1F5FAE;font-family:"Arial Black",Arial,sans-serif;font-weight:900;font-size:9px;line-height:1;padding-top:1.5px}
+.mtile::after{content:"";position:absolute;left:50%;bottom:2.5px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:currentColor;box-shadow:0 0 0 1px rgba(255,255,255,.7)}
+.joker{display:inline-block;height:1em;font-size:16px;line-height:1;margin-inline-start:3px;vertical-align:middle;margin-top:-3px;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
 /* current dealer's name on the right turns green */
 tbody tr.current[id^="row-"] td.rcol{background:var(--felt);box-shadow:none}
 tr.current .rcol .rd{color:var(--felt-ink)}
@@ -573,10 +578,10 @@ function refresh(keepLayer){
     $('winner').innerHTML=`<div class="winner">${GAMES[MODE].crown} <strong>${winners}</strong> بمجموع <span class="num">${fmt(best)}</span></div>`;
   } else $('winner').innerHTML='';
 
-  { const gn=$('gname'); if(gn) gn.textContent=GAMES[MODE].name; }
+  { const gn=$('gname'); if(gn) gn.textContent=GAMES[MODE].name; document.body.classList.toggle('m-okey', isOkey()); }
   // whose turn it is: their name in the table header turns green
   const dealerIdx=over?-1:next%n;
-  for(let p=0;p<n;p++){ const th=$('h-'+p); if(th){ const was=th.classList.contains('turn'); th.classList.toggle('turn', p===dealerIdx); th.innerHTML=esc(G.players[p])+(p===dealerIdx?'<span class="joker" role="img" aria-label="الموزّع" title="الموزّع">🃏</span>':''); if(was!==(p===dealerIdx)) requestAnimationFrame(fitNames); } }
+  for(let p=0;p<n;p++){ const th=$('h-'+p); if(th){ const was=th.classList.contains('turn'); th.classList.toggle('turn', p===dealerIdx); th.innerHTML=esc(G.players[p])+(p===dealerIdx?(isOkey()?'<span class="mtile" role="img" aria-label="الموزّع" title="الموزّع">8</span>':'<span class="joker" role="img" aria-label="الموزّع" title="الموزّع">🃏</span>'):''); if(was!==(p===dealerIdx)) requestAnimationFrame(fitNames); } }
 
   // grid: current row, totals, standings
   const started=G.scores.some(r=>r.some(v=>v!=null))||G.pen.some(v=>v!=null);
