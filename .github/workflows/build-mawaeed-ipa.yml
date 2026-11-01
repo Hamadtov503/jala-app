@@ -2,7 +2,7 @@ name: Build Mawaeed IPA
 
 on:
   push:
-    branches: [main, 'ccr-*']
+    branches: [main]
     paths:
       - 'mawaeed/**'
       - '.github/workflows/build-mawaeed-ipa.yml'
