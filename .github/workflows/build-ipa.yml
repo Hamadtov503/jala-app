@@ -3,6 +3,9 @@ name: Build Jala IPA
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'mawaeed/**'
+      - '.github/workflows/build-mawaeed-ipa.yml'
   workflow_dispatch:
 
 permissions:
