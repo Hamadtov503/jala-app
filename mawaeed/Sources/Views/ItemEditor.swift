@@ -89,8 +89,8 @@ struct ItemEditor: View {
         .navigationTitle(isNew ? "جديد" : "تعديل")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if !isPushed {
-                ToolbarItem(placement: .cancellationAction) {
+            ToolbarItem(placement: .cancellationAction) {
+                if !isPushed {
                     Button("إلغاء") { cancel() }
                 }
             }
