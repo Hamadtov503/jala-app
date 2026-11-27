@@ -859,8 +859,10 @@ function announce(btn){
     u.onend=u.onerror=()=>btn.classList.remove('on'); S.speak(u); return;
   }
   // unlock sound on iPhone while still inside the tap
-  // unlock the phone's voice inside the tap without saying anything (a lone space was read aloud as "space")
-  unlockAudio(); try{ const z=new SpeechSynthesisUtterance('،'); z.lang='ar-SA'; z.volume=0; z.rate=2; S.speak(z); }catch(e){}
+  // iPhone only lets the phone's voice start inside the tap: open with a real spoken word so the numbers
+  // that follow the recorded names are allowed to play (a silent primer was ignored and blocked them)
+  unlockAudio();
+  parts.unshift({text:'الترتيب.'});
   const tok=speaking={stop:false};
   (async()=>{ for(const x of parts){ if(tok.stop) break; if(x.clip){ if(!(await playClip(x.clip,tok))) await sayText(x.say,tok); } else await sayText(x.text,tok); }
     if(speaking===tok) speaking=null; btn.classList.remove('on'); })();
